@@ -18,7 +18,7 @@ Este proyecto es una aplicación de Android diseñada para probar la funcionalid
 
 1. Clona este repositorio en tu máquina local:
    ```bash
-   git clone https://github.com/tu-usuario/tu-repositorio.git](https://github.com/LauraCuellarCa/android_app.git
+   git clone https://github.com/LauraCuellarCa/android_app.git
    ```
 
 2. Abre el proyecto en Android Studio.
