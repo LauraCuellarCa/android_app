@@ -1,0 +1,56 @@
+/build
+
+# Android/IntelliJ specific
+.idea/
+*.iml
+*.hprof
+.gradle/
+gradle-app.setting
+local.properties
+captures/
+*.ipr
+*.iws
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/shelf/
+
+
+# Generated files
+/build/
+
+# Keystore files (security-sensitive)
+*.keystore
+*.jks
+
+# Logs and caches
+*.log
+.DS_Store
+# OS-specific files
+Thumbs.db
+
+# Local environment settings
+/local.properties
+
+# Jetpack Compose Preview Cache
+.idea/caches/
+.idea/modules.xml
+
+# APKs and Bundles
+*.apk
+*.aab
+
+# Crash reports
+crashlytics-build.properties
+fabric/com.crashlytics.services.settings/
+
+# Dependency directories
+node_modules/
+.pnp/
+.pnp.js
+
+# Kotlin-related
+*.kotlin_metadata
+**/kotlin/
+
+# Miscellaneous
+*.swp
