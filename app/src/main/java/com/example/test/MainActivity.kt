@@ -24,7 +24,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -34,12 +33,19 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import com.example.test.ui.theme.TestTheme
 import java.util.Locale
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.filled.Delete
 
 class MainActivity : ComponentActivity() {
-    private var activeFieldIndex by mutableIntStateOf(-1)
     private var field1 by mutableStateOf("")
     private var field2 by mutableStateOf("")
     private var field3 by mutableStateOf("")
+
+    private val fieldIdentifiers = mapOf(
+        "Sleeve width" to 0,
+        "Sleeve length" to 1,
+        "Back width" to 2
+    )
 
     private val speechRecognitionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -49,11 +55,7 @@ class MainActivity : ComponentActivity() {
             val results = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
             val spokenText = results?.get(0) ?: ""
 
-            when (activeFieldIndex) {
-                0 -> field1 = spokenText
-                1 -> field2 = spokenText
-                2 -> field3 = spokenText
-            }
+            processSpokenText(spokenText)
         }
     }
 
@@ -81,8 +83,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun checkPermissionAndStartSpeechRecognition(fieldIndex: Int) {
-        activeFieldIndex = fieldIndex
+    private fun checkPermissionAndStartSpeechRecognition() {
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
             == PermissionChecker.PERMISSION_GRANTED) {
@@ -90,6 +91,27 @@ class MainActivity : ComponentActivity() {
         } else {
             requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
+    }
+
+    private fun processSpokenText(spokenText:String){
+        for ((identifier, fieldIndex) in fieldIdentifiers){
+            if (spokenText.contains(identifier, ignoreCase = true)) {
+                val value = spokenText.substringAfter(identifier).trim()
+
+                when(fieldIndex){
+                    0 -> field1 = value
+                    1 -> field2 = value
+                    2 -> field3 = value
+                }
+                break
+            }
+        }
+    }
+
+    private fun clearAllFields() {
+        field1 = ""
+        field2 = ""
+        field3 = ""
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -106,7 +128,8 @@ class MainActivity : ComponentActivity() {
                         onField1Change = { field1 = it },
                         onField2Change = { field2 = it },
                         onField3Change = { field3 = it },
-                        onMicClick = { fieldIndex -> checkPermissionAndStartSpeechRecognition(fieldIndex) }
+                        onMicClick = { checkPermissionAndStartSpeechRecognition()} ,
+                        onClearClick = { clearAllFields() }
                     )
                 }
             }
@@ -123,7 +146,8 @@ fun MainContent(
     onField1Change: (String) -> Unit,
     onField2Change: (String) -> Unit,
     onField3Change: (String) -> Unit,
-    onMicClick: (Int) -> Unit
+    onMicClick: () -> Unit,
+    onClearClick: () -> Unit
 ) {
     Column(
         modifier = modifier
@@ -139,9 +163,22 @@ fun MainContent(
             field3 = field3,
             onField1Change = onField1Change,
             onField2Change = onField2Change,
-            onField3Change = onField3Change,
-            onMicClick = onMicClick
+            onField3Change = onField3Change
         )
+        // Fila para los botones de micrófono y papelera
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            // Botón de micrófono
+            IconButton(onClick = onMicClick) {
+                Icon(Icons.Default.Mic, contentDescription = "Speech to text")
+            }
+            // Botón de papelera
+            IconButton(onClick = onClearClick) {
+                Icon(Icons.Default.Delete, contentDescription = "Clear all fields")
+            }
+        }
     }
 }
 
@@ -155,7 +192,6 @@ fun InputFields(
     onField1Change: (String) -> Unit,
     onField2Change: (String) -> Unit,
     onField3Change: (String) -> Unit,
-    onMicClick: (Int) -> Unit
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -164,37 +200,22 @@ fun InputFields(
         OutlinedTextField(
             value = field1,
             onValueChange = onField1Change,
-            label = { Text("Field 1") },
-            modifier = Modifier.fillMaxWidth(),
-            trailingIcon = {
-                IconButton(onClick = { onMicClick(0) }) {
-                    Icon(Icons.Default.Mic, contentDescription = "Speech to text for field 1")
-                }
-            }
+            label = { Text("Sleeve width") },
+            modifier = Modifier.fillMaxWidth()
         )
 
         OutlinedTextField(
             value = field2,
             onValueChange = onField2Change,
-            label = { Text("Field 2") },
-            modifier = Modifier.fillMaxWidth(),
-            trailingIcon = {
-                IconButton(onClick = { onMicClick(1) }) {
-                    Icon(Icons.Default.Mic, contentDescription = "Speech to text for field 2")
-                }
-            }
+            label = { Text("Sleeve length") },
+            modifier = Modifier.fillMaxWidth()
         )
 
         OutlinedTextField(
             value = field3,
             onValueChange = onField3Change,
-            label = { Text("Field 3") },
-            modifier = Modifier.fillMaxWidth(),
-            trailingIcon = {
-                IconButton(onClick = { onMicClick(2) }) {
-                    Icon(Icons.Default.Mic, contentDescription = "Speech to text for field 3")
-                }
-            }
+            label = { Text("Back width") },
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
