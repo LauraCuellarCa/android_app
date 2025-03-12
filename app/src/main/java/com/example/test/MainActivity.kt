@@ -5,6 +5,8 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.speech.RecognitionListener
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -40,6 +42,8 @@ class MainActivity : ComponentActivity() {
     private var field1 by mutableStateOf("")
     private var field2 by mutableStateOf("")
     private var field3 by mutableStateOf("")
+    private var isListening by mutableStateOf(false)
+    private var speechRecognizer: SpeechRecognizer? = null
 
     private val fieldIdentifiers = mapOf(
         "Sleeve width" to 0,
@@ -111,35 +115,143 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun startSpeechRecognition() {
+        // Create a new SpeechRecognizer if needed
+        if (speechRecognizer == null) {
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
+        }
+        
+        // Set up the recognition listener
+        speechRecognizer?.setRecognitionListener(object : RecognitionListener {
+            override fun onReadyForSpeech(params: Bundle?) {
+                isListening = true
+                Toast.makeText(this@MainActivity, "Listening...", Toast.LENGTH_SHORT).show()
+            }
+
+            override fun onBeginningOfSpeech() {
+                // Start of speech detected
+            }
+
+            override fun onRmsChanged(rmsdB: Float) {
+                // Audio level changed
+            }
+
+            override fun onBufferReceived(buffer: ByteArray?) {
+                // More audio data received
+            }
+
+            override fun onEndOfSpeech() {
+                // End of speech detected - but we'll restart listening
+                restartSpeechRecognition()
+            }
+
+            override fun onError(error: Int) {
+                when (error) {
+                    SpeechRecognizer.ERROR_NO_MATCH,
+                    SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> {
+                        // Just restart on common errors
+                        restartSpeechRecognition()
+                    }
+                    else -> {
+                        isListening = false
+                        Toast.makeText(this@MainActivity, "Speech recognition error: $error", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+
+            override fun onResults(results: Bundle?) {
+                // Final results received
+                results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.let { 
+                    if (it.isNotEmpty()) {
+                        processSpokenText(it[0])
+                    }
+                }
+                // Restart listening
+                restartSpeechRecognition()
+            }
+
+            override fun onPartialResults(partialResults: Bundle?) {
+                // Process partial results as they come in
+                partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.let {
+                    if (it.isNotEmpty()) {
+                        // Process partial speech text to update UI immediately
+                        processSpokenText(it[0])
+                    }
+                }
+            }
+
+            override fun onEvent(eventType: Int, params: Bundle?) {
+                // Speech recognition event occurred
+            }
+        })
+
+        // Set up the intent for continuous recognition
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now...")
+            putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, packageName)
             
-            // Set a longer speech timeout
-            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 10000)
-            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 10000)
+            // Set very long timeouts
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 30000)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 30000)
             putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 1000)
             
             // Enable partial results
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-            
-            // Set max results
-            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
         }
 
         try {
-            speechRecognitionLauncher.launch(intent)
+            // Start listening
+            speechRecognizer?.startListening(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, "Speech recognition not supported on this device", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Speech recognition failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            isListening = false
         }
+    }
+    
+    private fun restartSpeechRecognition() {
+        // Small delay before restarting
+        android.os.Handler(mainLooper).postDelayed({
+            if (isListening) {
+                // Only restart if we're still in listening mode
+                val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+                    putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, packageName)
+                    
+                    // Set very long timeouts
+                    putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 30000)
+                    putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 30000)
+                    putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 1000)
+                    
+                    // Enable partial results
+                    putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+                }
+                
+                try {
+                    speechRecognizer?.startListening(intent)
+                } catch (e: Exception) {
+                    isListening = false
+                }
+            }
+        }, 500) // Small delay to prevent too frequent restarts
+    }
+
+    private fun stopSpeechRecognition() {
+        isListening = false
+        speechRecognizer?.stopListening()
+        speechRecognizer?.destroy()
+        speechRecognizer = null
     }
 
     private fun checkPermissionAndStartSpeechRecognition() {
-
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
             == PermissionChecker.PERMISSION_GRANTED) {
-            startSpeechRecognition()
+            if (isListening) {
+                stopSpeechRecognition()
+                Toast.makeText(this, "Stopped listening", Toast.LENGTH_SHORT).show()
+            } else {
+                startSpeechRecognition()
+            }
         } else {
             requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
@@ -259,6 +371,13 @@ class MainActivity : ComponentActivity() {
         field3 = ""
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        // Clean up the speech recognizer
+        speechRecognizer?.destroy()
+        speechRecognizer = null
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -273,8 +392,9 @@ class MainActivity : ComponentActivity() {
                         onField1Change = { field1 = it },
                         onField2Change = { field2 = it },
                         onField3Change = { field3 = it },
-                        onMicClick = { checkPermissionAndStartSpeechRecognition()} ,
-                        onClearClick = { clearAllFields() }
+                        onMicClick = { checkPermissionAndStartSpeechRecognition() },
+                        onClearClick = { clearAllFields() },
+                        isListening = isListening
                     )
                 }
             }
@@ -292,7 +412,8 @@ fun MainContent(
     onField2Change: (String) -> Unit,
     onField3Change: (String) -> Unit,
     onMicClick: () -> Unit,
-    onClearClick: () -> Unit
+    onClearClick: () -> Unit,
+    isListening: Boolean
 ) {
     Column(
         modifier = modifier
@@ -315,14 +436,27 @@ fun MainContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            // Botón de micrófono
+            // Botón de micrófono con indicador de estado
             IconButton(onClick = onMicClick) {
-                Icon(Icons.Default.Mic, contentDescription = "Speech to text")
+                Icon(
+                    Icons.Default.Mic, 
+                    contentDescription = "Speech to text",
+                    tint = if (isListening) androidx.compose.ui.graphics.Color.Red else androidx.compose.ui.graphics.Color.Unspecified
+                )
             }
             // Botón de papelera
             IconButton(onClick = onClearClick) {
                 Icon(Icons.Default.Delete, contentDescription = "Clear all fields")
             }
+        }
+        
+        // Show listening indicator
+        if (isListening) {
+            Text(
+                "Listening...",
+                color = androidx.compose.ui.graphics.Color.Red,
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
     }
 }
