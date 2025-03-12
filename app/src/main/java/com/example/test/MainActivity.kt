@@ -47,9 +47,6 @@ class MainActivity : ComponentActivity() {
     private var field1 by mutableStateOf("")
     private var field2 by mutableStateOf("")
     private var field3 by mutableStateOf("")
-    
-    // Track if speech recognition is currently active
-    private var isListening by mutableStateOf(false)
 
     // Map of field names to their corresponding indices
     private val fieldIdentifiers = mapOf(
@@ -106,9 +103,6 @@ class MainActivity : ComponentActivity() {
     private val speechRecognitionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        // Reset listening state when speech recognition finishes
-        isListening = false
-        
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
             val data = result.data
             val results = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
@@ -135,9 +129,6 @@ class MainActivity : ComponentActivity() {
      * Configures and launches the system speech recognition intent
      */
     private fun startSpeechRecognition() {
-        // Set listening state to true
-        isListening = true
-        
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
@@ -158,45 +149,7 @@ class MainActivity : ComponentActivity() {
         try {
             speechRecognitionLauncher.launch(intent)
         } catch (e: Exception) {
-            // Reset listening state on error
-            isListening = false
             Toast.makeText(this, "Speech recognition not supported on this device", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    /**
-     * Stops speech recognition if it's currently active
-     */
-    private fun stopSpeechRecognition() {
-        // Find and finalize any active speech recognition
-        try {
-            val packageManager = applicationContext.packageManager
-            val activities = packageManager.queryIntentActivities(
-                Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH), 0
-            )
-            
-            if (activities.isNotEmpty()) {
-                // Send a cancel broadcast to stop recognition
-                sendBroadcast(Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS))
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("SpeechRecognition", "Error stopping speech recognition: ${e.message}")
-        }
-        
-        // Reset the listening state
-        isListening = false
-    }
-
-    /**
-     * Toggles speech recognition on/off
-     * If not listening, starts speech recognition
-     * If already listening, stops speech recognition
-     */
-    private fun toggleSpeechRecognition() {
-        if (isListening) {
-            stopSpeechRecognition()
-        } else {
-            checkPermissionAndStartSpeechRecognition()
         }
     }
 
@@ -361,9 +314,8 @@ class MainActivity : ComponentActivity() {
                         onField1Change = { field1 = it },
                         onField2Change = { field2 = it },
                         onField3Change = { field3 = it },
-                        onMicClick = { toggleSpeechRecognition() },
-                        onClearClick = { clearAllFields() },
-                        isListening = isListening
+                        onMicClick = { checkPermissionAndStartSpeechRecognition()} ,
+                        onClearClick = { clearAllFields() }
                     )
                 }
             }
@@ -385,8 +337,7 @@ fun MainContent(
     onField2Change: (String) -> Unit,
     onField3Change: (String) -> Unit,
     onMicClick: () -> Unit,
-    onClearClick: () -> Unit,
-    isListening: Boolean
+    onClearClick: () -> Unit
 ) {
     Column(
         modifier = modifier
@@ -409,32 +360,14 @@ fun MainContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            // Microphone button - toggles speech recognition on/off
+            // Microphone button - triggers speech recognition
             IconButton(onClick = onMicClick) {
-                // Show different icon based on listening state
-                val micIcon = if (isListening) Icons.Default.Mic else Icons.Default.Mic
-                val micColor = if (isListening) androidx.compose.ui.graphics.Color.Red else androidx.compose.ui.graphics.Color.Unspecified
-                val description = if (isListening) "Stop speech recognition" else "Start speech recognition"
-                
-                Icon(
-                    imageVector = micIcon,
-                    contentDescription = description,
-                    tint = micColor
-                )
+                Icon(Icons.Default.Mic, contentDescription = "Speech to text")
             }
             // Clear button - resets all measurement fields
             IconButton(onClick = onClearClick) {
                 Icon(Icons.Default.Delete, contentDescription = "Clear all fields")
             }
-        }
-        
-        // Show listening status
-        if (isListening) {
-            Text(
-                text = "Listening...",
-                color = androidx.compose.ui.graphics.Color.Red,
-                modifier = Modifier.padding(top = 8.dp)
-            )
         }
     }
 }
