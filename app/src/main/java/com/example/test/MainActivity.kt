@@ -346,7 +346,7 @@ fun MainContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Greeting(name = "Laura")
+        FormTitle()
         InputFields(
             field1 = field1,
             field2 = field2,
@@ -416,12 +416,12 @@ fun InputFields(
 }
 
 /**
- * Simple greeting component that displays a welcome message
+ * Title component that displays the form's purpose
  */
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
+fun FormTitle(modifier: Modifier = Modifier) {
     Text(
-        text = "Hello $name!",
+        text = "Formulario de Medidas",
         modifier = modifier
     )
 }
