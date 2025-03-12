@@ -35,6 +35,8 @@ import com.example.test.ui.theme.TestTheme
 import java.util.Locale
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.StopCircle
+import android.view.KeyEvent
 
 /**
  * MainActivity: The main entry point for the application.
@@ -47,6 +49,9 @@ class MainActivity : ComponentActivity() {
     private var field1 by mutableStateOf("")
     private var field2 by mutableStateOf("")
     private var field3 by mutableStateOf("")
+
+    // Flag to track if speech recognition is currently active
+    private var isSpeechRecognitionActive by mutableStateOf(false)
 
     // Map of field names to their corresponding indices
     private val fieldIdentifiers = mapOf(
@@ -103,6 +108,9 @@ class MainActivity : ComponentActivity() {
     private val speechRecognitionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
+        // Set speech recognition flag to inactive when recognition completes
+        isSpeechRecognitionActive = false
+        
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
             val data = result.data
             val results = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
@@ -129,15 +137,18 @@ class MainActivity : ComponentActivity() {
      * Configures and launches the system speech recognition intent
      */
     private fun startSpeechRecognition() {
+        // Set speech recognition flag to active
+        isSpeechRecognitionActive = true
+        
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
             putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now...")
             
-            // Set a longer speech timeout for better user experience
-            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 10000)
-            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 10000)
-            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 1000)
+            // Set much longer speech timeouts to prevent microphone from stopping too early
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 30000) // 30 seconds
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 20000) // 20 seconds
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 1500) // Slightly increased minimum length
             
             // Enable partial results to provide feedback during speech
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
@@ -149,7 +160,32 @@ class MainActivity : ComponentActivity() {
         try {
             speechRecognitionLauncher.launch(intent)
         } catch (e: Exception) {
+            isSpeechRecognitionActive = false
             Toast.makeText(this, "Speech recognition not supported on this device", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /**
+     * Stops the ongoing speech recognition process
+     */
+    private fun stopSpeechRecognition() {
+        if (isSpeechRecognitionActive) {
+            // Android's speech recognition API doesn't provide a direct way to programmatically stop
+            // the recognition. However, we can send the device's back button event which will
+            // terminate the speech recognition activity.
+            try {
+                val currentActivity = this
+                currentActivity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK))
+                currentActivity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BACK))
+                
+                // Reset flag
+                isSpeechRecognitionActive = false
+                
+                // Notify user
+                Toast.makeText(this, "Speech recognition stopped", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(this, "Failed to stop speech recognition", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -314,8 +350,10 @@ class MainActivity : ComponentActivity() {
                         onField1Change = { field1 = it },
                         onField2Change = { field2 = it },
                         onField3Change = { field3 = it },
-                        onMicClick = { checkPermissionAndStartSpeechRecognition()} ,
-                        onClearClick = { clearAllFields() }
+                        onMicClick = { checkPermissionAndStartSpeechRecognition() },
+                        onStopClick = { stopSpeechRecognition() },
+                        onClearClick = { clearAllFields() },
+                        isSpeechActive = isSpeechRecognitionActive
                     )
                 }
             }
@@ -337,7 +375,9 @@ fun MainContent(
     onField2Change: (String) -> Unit,
     onField3Change: (String) -> Unit,
     onMicClick: () -> Unit,
-    onClearClick: () -> Unit
+    onStopClick: () -> Unit,
+    onClearClick: () -> Unit,
+    isSpeechActive: Boolean = false
 ) {
     Column(
         modifier = modifier
@@ -361,9 +401,15 @@ fun MainContent(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             // Microphone button - triggers speech recognition
-            IconButton(onClick = onMicClick) {
+            IconButton(onClick = onMicClick, enabled = !isSpeechActive) {
                 Icon(Icons.Default.Mic, contentDescription = "Speech to text")
             }
+            
+            // Stop button - stops speech recognition
+            IconButton(onClick = onStopClick, enabled = isSpeechActive) {
+                Icon(Icons.Default.StopCircle, contentDescription = "Stop speech recognition")
+            }
+            
             // Clear button - resets all measurement fields
             IconButton(onClick = onClearClick) {
                 Icon(Icons.Default.Delete, contentDescription = "Clear all fields")
