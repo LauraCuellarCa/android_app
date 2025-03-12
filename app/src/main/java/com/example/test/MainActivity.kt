@@ -325,7 +325,7 @@ class MainActivity : ComponentActivity() {
 
 /**
  * Main composable that contains the entire UI structure
- * Includes greeting, input fields, and action buttons
+ * Includes title, input fields, and action buttons
  */
 @Composable
 fun MainContent(
@@ -360,11 +360,11 @@ fun MainContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            // Microphone button - triggers speech recognition
+            // Botón de micrófono
             IconButton(onClick = onMicClick) {
                 Icon(Icons.Default.Mic, contentDescription = "Speech to text")
             }
-            // Clear button - resets all measurement fields
+            // Botón de papelera
             IconButton(onClick = onClearClick) {
                 Icon(Icons.Default.Delete, contentDescription = "Clear all fields")
             }
