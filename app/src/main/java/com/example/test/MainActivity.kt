@@ -66,8 +66,27 @@ class MainActivity : ComponentActivity() {
         "shoulder width" to "back width"
     )
 
+    // Mapping from regex pattern groups to field indices
+    private val patternToFieldIndex = mapOf(
+        "sleeve width" to 0,
+        "width of sleeve" to 0,
+        "width of the sleeve" to 0,
+        "sleeve's width" to 0,
+        
+        "sleeve length" to 1,
+        "length of sleeve" to 1,
+        "length of the sleeve" to 1,
+        "sleeve's length" to 1,
+        
+        "back width" to 2,
+        "width of back" to 2,
+        "width of the back" to 2,
+        "back's width" to 2,
+        "shoulder width" to 2
+    )
+
     // Regular expression pattern to match field names and measurements with more variations
-    private val measurementPattern = """(?:(?:the|for|my|our)\s+)?(?:(?:measurement|measure|value)(?:\s+(?:for|of))?\s+)?(?:(?:the)\s+)?(${fieldAliases.keys.joinToString("|")})(?:\s+(?:is|equals|measures|of|at|reads|shows|about|approximately|comes to|was))?\s+(\d+(?:\.\d+)?)\s*(?:cm|centimeters|centimeter|c\.m\.|cms)"""
+    private val measurementPattern = """(sleeve\s+width|width\s+of\s+(?:the\s+)?sleeve|sleeve's\s+width|length\s+of\s+(?:the\s+)?sleeve|sleeve\s+length|sleeve's\s+length|back\s+width|width\s+of\s+(?:the\s+)?back|back's\s+width|shoulder\s+width)(?:\s+(?:is|equals|measures|of|at|reads|shows|about|approximately|comes\s+to|was))?\s+(\d+(?:\.\d+)?)\s*(?:cm|centimeters|centimeter|c\.m\.|cms)"""
 
     private val speechRecognitionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -98,12 +117,15 @@ class MainActivity : ComponentActivity() {
             putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now...")
             
             // Set a longer speech timeout
-            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 5000)
-            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 5000)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 10000)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 10000)
             putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 1000)
             
             // Enable partial results
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            
+            // Set max results
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5)
         }
 
         try {
@@ -127,6 +149,9 @@ class MainActivity : ComponentActivity() {
         // Show the full recognized text for debugging
         Toast.makeText(this, "Recognized: $spokenText", Toast.LENGTH_SHORT).show()
         
+        // Debug log for the entire speech input
+        android.util.Log.d("SpeechRecognition", "Input: $spokenText")
+        
         // Convert to lowercase for case-insensitive matching
         val lowerCaseText = spokenText.lowercase()
         
@@ -134,7 +159,10 @@ class MainActivity : ComponentActivity() {
         val pattern = Regex(measurementPattern, RegexOption.IGNORE_CASE)
         
         // Find all matches in the spoken text
-        val matches = pattern.findAll(lowerCaseText)
+        val matches = pattern.findAll(lowerCaseText).toList()
+        
+        // Log the number of matches found
+        android.util.Log.d("SpeechRecognition", "Number of matches found: ${matches.size}")
         
         // Flag to track if we found any matches
         var matchFound = false
@@ -142,39 +170,46 @@ class MainActivity : ComponentActivity() {
         val updatedFields = mutableListOf<String>()
         
         for (match in matches) {
+            // Log each match for debugging
+            android.util.Log.d("SpeechRecognition", "Processing match: ${match.value}")
+            
             matchFound = true
             matchCount++
             
             // Get the matched field name (could be an alias)
-            val matchedFieldName = match.groupValues[1].lowercase()
+            val matchedFieldName = match.groupValues[1].lowercase().trim()
+            android.util.Log.d("SpeechRecognition", "Matched field name: $matchedFieldName")
             
-            // Get the standardized field name from the alias map
-            val standardFieldName = fieldAliases[matchedFieldName] ?: continue
+            // Find the field index based on the matched pattern
+            val fieldIndex = findFieldIndex(matchedFieldName)
+            if (fieldIndex == -1) {
+                android.util.Log.d("SpeechRecognition", "No field index found for: $matchedFieldName")
+                continue
+            }
+            
+            // Get the measurement value
+            val measurementValue = match.groupValues[2]
+            android.util.Log.d("SpeechRecognition", "Measurement value: $measurementValue")
             
             // Format the measurement
-            val measurement = "${match.groupValues[2]} cm"
-            
-            // Find the corresponding field index
-            val fieldIndex = when (standardFieldName) {
-                "sleeve width" -> 0
-                "sleeve length" -> 1
-                "back width" -> 2
-                else -> continue
-            }
+            val measurement = "$measurementValue cm"
             
             // Update the appropriate field
             when (fieldIndex) {
                 0 -> {
                     field1 = measurement
                     updatedFields.add("Sleeve width")
+                    android.util.Log.d("SpeechRecognition", "Updated field1 (Sleeve width) to: $measurement")
                 }
                 1 -> {
                     field2 = measurement
                     updatedFields.add("Sleeve length")
+                    android.util.Log.d("SpeechRecognition", "Updated field2 (Sleeve length) to: $measurement")
                 }
                 2 -> {
                     field3 = measurement
                     updatedFields.add("Back width")
+                    android.util.Log.d("SpeechRecognition", "Updated field3 (Back width) to: $measurement")
                 }
             }
         }
@@ -187,12 +222,28 @@ class MainActivity : ComponentActivity() {
             // If no matches were found, show a helpful message
             Toast.makeText(this, "No measurements detected. Try saying 'sleeve length is 57 cm'", Toast.LENGTH_LONG).show()
         }
+    }
 
-        // Print all matches to the log for debugging (you can remove this in production)
-        val debugMatches = pattern.findAll(lowerCaseText)
-        debugMatches.forEach { match ->
-            android.util.Log.d("SpeechRecognition", "Match: ${match.groupValues}")
+    // Helper function to find field index from matched text
+    private fun findFieldIndex(matchedText: String): Int {
+        // Try exact match first
+        patternToFieldIndex[matchedText]?.let { return it }
+        
+        // If no exact match, try partial matches
+        for ((pattern, index) in patternToFieldIndex) {
+            if (matchedText.contains(pattern)) {
+                return index
+            }
         }
+        
+        // Check for specific keywords
+        when {
+            matchedText.contains("sleeve") && matchedText.contains("width") -> return 0
+            matchedText.contains("sleeve") && matchedText.contains("length") -> return 1
+            matchedText.contains("back") || matchedText.contains("shoulder") -> return 2
+        }
+        
+        return -1  // No match found
     }
 
     // Helper function to capitalize first letter of each word
