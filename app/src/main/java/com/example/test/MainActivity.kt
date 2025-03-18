@@ -262,6 +262,10 @@ class MainActivity : ComponentActivity() {
         // Convertir a minúsculas para coincidencia sin distinción entre mayúsculas y minúsculas
         val lowerCaseText = spokenText.lowercase()
         
+        // Convertir palabras numéricas a dígitos
+        val processedText = convertSpanishNumberWordsToDigits(lowerCaseText)
+        android.util.Log.d("SpeechRecognition", "Processed text with converted numbers: $processedText")
+        
         // Bandera para rastrear si encontramos alguna coincidencia
         var matchFound = false
         val updatedFields = mutableListOf<String>()
@@ -270,7 +274,7 @@ class MainActivity : ComponentActivity() {
         // NOTA: Este es el núcleo del sistema de coincidencia de patrones
         android.util.Log.d("SpeechRecognition", "Trying to match with ${allPatterns.size} patterns")
         allPatterns.forEachIndexed { index, pattern ->
-            val matches = pattern.findAll(lowerCaseText).toList()
+            val matches = pattern.findAll(processedText).toList()
             android.util.Log.d("SpeechRecognition", "Pattern $index found ${matches.size} matches")
             
             for (match in matches) {
@@ -298,10 +302,10 @@ class MainActivity : ComponentActivity() {
             android.util.Log.d("SpeechRecognition", "No matches found with new patterns, trying fallback method")
             // Comprobar contra patrones tradicionales como respaldo
             for ((pattern, fieldIndex) in patternToFieldIndex) {
-                if (lowerCaseText.contains(pattern)) {
+                if (processedText.contains(pattern)) {
                     // Extraer medida potencial usando regex
                     val numericPattern = Regex("\\d+(?:\\.\\d+)?\\s*(?:cm|centímetros|centímetro|c\\.m\\.|cms)", RegexOption.IGNORE_CASE)
-                    val numericMatch = numericPattern.find(lowerCaseText)
+                    val numericMatch = numericPattern.find(processedText)
                     
                     if (numericMatch != null) {
                         matchFound = true
@@ -323,6 +327,115 @@ class MainActivity : ComponentActivity() {
         }
     }
     
+    /**
+     * Convierte palabras numéricas en español a sus valores numéricos
+     * Utilizando expresiones regulares en lugar de un mapa estático
+     * 
+     * @param text Texto con posibles palabras numéricas
+     * @return El mismo texto con palabras numéricas convertidas a dígitos
+     */
+    private fun convertSpanishNumberWordsToDigits(text: String): String {
+        var processedText = text
+        
+        // Patrones para números simples (0-29)
+        val simpleNumberPatterns = mapOf(
+            Regex("\\bcero\\b") to "0",
+            Regex("\\bun[oa]?\\b") to "1",
+            Regex("\\bdos\\b") to "2",
+            Regex("\\btres\\b") to "3",
+            Regex("\\bcuatro\\b") to "4",
+            Regex("\\bcinco\\b") to "5",
+            Regex("\\bseis\\b") to "6",
+            Regex("\\bsiete\\b") to "7",
+            Regex("\\bocho\\b") to "8",
+            Regex("\\bnueve\\b") to "9",
+            Regex("\\bdiez\\b") to "10",
+            Regex("\\bonce\\b") to "11",
+            Regex("\\bdoce\\b") to "12",
+            Regex("\\btrece\\b") to "13",
+            Regex("\\bcatorce\\b") to "14",
+            Regex("\\bquince\\b") to "15",
+            Regex("\\bdiecis[eé]is\\b") to "16",
+            Regex("\\bdiecisiete\\b") to "17",
+            Regex("\\bdieciocho\\b") to "18",
+            Regex("\\bdiecinueve\\b") to "19",
+            Regex("\\bveinte\\b") to "20",
+            Regex("\\bveintiun[oa]?\\b") to "21",
+            Regex("\\bveintid[oó]s\\b") to "22",
+            Regex("\\bveintitr[eé]s\\b") to "23",
+            Regex("\\bveinticuatro\\b") to "24",
+            Regex("\\bveinticinco\\b") to "25",
+            Regex("\\bveintis[eé]is\\b") to "26",
+            Regex("\\bveintisiete\\b") to "27",
+            Regex("\\bveintiocho\\b") to "28",
+            Regex("\\bveintinueve\\b") to "29"
+        )
+        
+        // Patrones para decenas (30-90)
+        val tensPatterns = mapOf(
+            Regex("\\btreinta\\b") to "30",
+            Regex("\\bcuarenta\\b") to "40",
+            Regex("\\bcincuenta\\b") to "50",
+            Regex("\\bsesenta\\b") to "60",
+            Regex("\\bsetenta\\b") to "70",
+            Regex("\\bochenta\\b") to "80",
+            Regex("\\bnoventa\\b") to "90"
+        )
+        
+        // Patrón para centenas
+        val hundredsPattern = Regex("\\bcien(to)?\\b")
+        
+        // Patrón para construcciones como "treinta y dos"
+        val compoundPattern = Regex("\\b(treinta|cuarenta|cincuenta|sesenta|setenta|ochenta|noventa)\\s+y\\s+(un[oa]?|dos|tres|cuatro|cinco|seis|siete|ocho|nueve)\\b")
+        
+        // Reemplazar patrones compuestos primero
+        processedText = processedText.replace(compoundPattern) { match ->
+            val tensWord = match.groupValues[1]
+            val unitsWord = match.groupValues[2]
+            
+            val tensValue = when(tensWord) {
+                "treinta" -> 30
+                "cuarenta" -> 40
+                "cincuenta" -> 50
+                "sesenta" -> 60
+                "setenta" -> 70
+                "ochenta" -> 80
+                "noventa" -> 90
+                else -> 0
+            }
+            
+            val unitsValue = when {
+                unitsWord.startsWith("un") -> 1
+                unitsWord == "dos" -> 2
+                unitsWord == "tres" -> 3
+                unitsWord == "cuatro" -> 4
+                unitsWord == "cinco" -> 5
+                unitsWord == "seis" -> 6
+                unitsWord == "siete" -> 7
+                unitsWord == "ocho" -> 8
+                unitsWord == "nueve" -> 9
+                else -> 0
+            }
+            
+            (tensValue + unitsValue).toString()
+        }
+        
+        // Reemplazar números simples
+        simpleNumberPatterns.forEach { (regex, replacement) ->
+            processedText = processedText.replace(regex, replacement)
+        }
+        
+        // Reemplazar decenas
+        tensPatterns.forEach { (regex, replacement) ->
+            processedText = processedText.replace(regex, replacement)
+        }
+        
+        // Reemplazar centenas
+        processedText = processedText.replace(hundredsPattern, "100")
+        
+        return processedText
+    }
+
     /**
      * Método auxiliar para actualizar un campo con un valor de medida
      * Extrae la lógica para actualizar campos para evitar duplicación
