@@ -50,53 +50,53 @@ class MainActivity : ComponentActivity() {
 
     // Map of field names to their corresponding indices
     private val fieldIdentifiers = mapOf(
-        "Sleeve width" to 0,
-        "Sleeve length" to 1,
-        "Back width" to 2
+        "Ancho de manga" to 0,
+        "Largo de manga" to 1,
+        "Ancho de espalda" to 2
     )
 
     // Map of alternative terms to the standard field names
     // This allows the app to recognize various ways users might refer to the same measurement
     private val fieldAliases = mapOf(
-        "sleeve width" to "sleeve width",
-        "width of sleeve" to "sleeve width",
-        "sleeve's width" to "sleeve width",
-        "width of the sleeve" to "sleeve width",
+        "ancho de manga" to "ancho de manga",
+        "manga ancho" to "ancho de manga",
+        "anchura de manga" to "ancho de manga",
+        "ancho de la manga" to "ancho de manga",
         
-        "sleeve length" to "sleeve length",
-        "length of sleeve" to "sleeve length",
-        "sleeve's length" to "sleeve length",
-        "length of the sleeve" to "sleeve length",
+        "largo de manga" to "largo de manga",
+        "manga largo" to "largo de manga",
+        "longitud de manga" to "largo de manga",
+        "largo de la manga" to "largo de manga",
         
-        "back width" to "back width",
-        "width of back" to "back width",
-        "back's width" to "back width",
-        "width of the back" to "back width",
-        "shoulder width" to "back width"
+        "ancho de espalda" to "ancho de espalda",
+        "espalda ancho" to "ancho de espalda",
+        "anchura de espalda" to "ancho de espalda",
+        "ancho de la espalda" to "ancho de espalda",
+        "ancho de hombros" to "ancho de espalda"
     )
 
     // Mapping from recognized phrases to field indices
     private val patternToFieldIndex = mapOf(
-        "sleeve width" to 0,
-        "width of sleeve" to 0,
-        "width of the sleeve" to 0,
-        "sleeve's width" to 0,
+        "ancho de manga" to 0,
+        "manga ancho" to 0,
+        "anchura de manga" to 0,
+        "ancho de la manga" to 0,
         
-        "sleeve length" to 1,
-        "length of sleeve" to 1,
-        "length of the sleeve" to 1,
-        "sleeve's length" to 1,
+        "largo de manga" to 1,
+        "manga largo" to 1,
+        "longitud de manga" to 1,
+        "largo de la manga" to 1,
         
-        "back width" to 2,
-        "width of back" to 2,
-        "width of the back" to 2,
-        "back's width" to 2,
-        "shoulder width" to 2
+        "ancho de espalda" to 2,
+        "espalda ancho" to 2,
+        "anchura de espalda" to 2,
+        "ancho de la espalda" to 2,
+        "ancho de hombros" to 2
     )
 
     // Regular expression pattern to match field names and measurements with variations
     // This regex captures the field name and the numerical value from speech input
-    private val measurementPattern = """(sleeve\s+width|width\s+of\s+(?:the\s+)?sleeve|sleeve's\s+width|length\s+of\s+(?:the\s+)?sleeve|sleeve\s+length|sleeve's\s+length|back\s+width|width\s+of\s+(?:the\s+)?back|back's\s+width|shoulder\s+width)(?:\s+(?:is|equals|measures|of|at|reads|shows|about|approximately|comes\s+to|was))?\s+(\d+(?:\.\d+)?)\s*(?:cm|centimeters|centimeter|c\.m\.|cms)"""
+    private val measurementPattern = """(ancho\s+de\s+(?:la\s+)?manga|manga\s+ancho|anchura\s+de\s+manga|largo\s+de\s+(?:la\s+)?manga|manga\s+largo|longitud\s+de\s+manga|ancho\s+de\s+(?:la\s+)?espalda|espalda\s+ancho|anchura\s+de\s+espalda|ancho\s+de\s+hombros)(?:\s+(?:es|mide|igual\s+a|de|tiene|marca|aproximadamente|como))?\s+(\d+(?:\.\d+)?)\s*(?:cm|centímetros|centímetro|c\.m\.|cms)"""
 
     // Activity result launcher for speech recognition
     // This handles the result from the speech recognition intent
@@ -120,7 +120,7 @@ class MainActivity : ComponentActivity() {
         if (isGranted) {
             startSpeechRecognition()
         } else {
-            Toast.makeText(this, "Microphone permission is required for speech recognition", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Se requiere permiso del micrófono para el reconocimiento de voz", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -131,8 +131,8 @@ class MainActivity : ComponentActivity() {
     private fun startSpeechRecognition() {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now...")
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-ES")
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Hable ahora...")
             
             // Set a longer speech timeout for better user experience
             putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 10000)
@@ -149,7 +149,7 @@ class MainActivity : ComponentActivity() {
         try {
             speechRecognitionLauncher.launch(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, "Speech recognition not supported on this device", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "El reconocimiento de voz no está soportado en este dispositivo", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -174,7 +174,7 @@ class MainActivity : ComponentActivity() {
      */
     private fun processSpokenText(spokenText: String) {
         // Show the full recognized text for debugging
-        Toast.makeText(this, "Recognized: $spokenText", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Reconocido: $spokenText", Toast.LENGTH_SHORT).show()
         
         // Debug log for the entire speech input
         android.util.Log.d("SpeechRecognition", "Input: $spokenText")
@@ -226,18 +226,18 @@ class MainActivity : ComponentActivity() {
             when (fieldIndex) {
                 0 -> {
                     field1 = measurement
-                    updatedFields.add("Sleeve width")
-                    android.util.Log.d("SpeechRecognition", "Updated field1 (Sleeve width) to: $measurement")
+                    updatedFields.add("Ancho de manga")
+                    android.util.Log.d("SpeechRecognition", "Updated field1 (Ancho de manga) to: $measurement")
                 }
                 1 -> {
                     field2 = measurement
-                    updatedFields.add("Sleeve length")
-                    android.util.Log.d("SpeechRecognition", "Updated field2 (Sleeve length) to: $measurement")
+                    updatedFields.add("Largo de manga")
+                    android.util.Log.d("SpeechRecognition", "Updated field2 (Largo de manga) to: $measurement")
                 }
                 2 -> {
                     field3 = measurement
-                    updatedFields.add("Back width")
-                    android.util.Log.d("SpeechRecognition", "Updated field3 (Back width) to: $measurement")
+                    updatedFields.add("Ancho de espalda")
+                    android.util.Log.d("SpeechRecognition", "Updated field3 (Ancho de espalda) to: $measurement")
                 }
             }
         }
@@ -245,10 +245,10 @@ class MainActivity : ComponentActivity() {
         // Show feedback to the user about which fields were updated
         if (matchFound) {
             val updatedFieldsStr = updatedFields.joinToString(", ")
-            Toast.makeText(this, "Updated fields: $updatedFieldsStr", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Campos actualizados: $updatedFieldsStr", Toast.LENGTH_SHORT).show()
         } else {
             // If no matches were found, show a helpful message with an example
-            Toast.makeText(this, "No measurements detected. Try saying 'sleeve length is 57 cm'", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "No se detectaron medidas. Intente decir 'largo de manga es 57 cm'", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -272,9 +272,9 @@ class MainActivity : ComponentActivity() {
         
         // Check for specific keywords as a fallback
         when {
-            matchedText.contains("sleeve") && matchedText.contains("width") -> return 0
-            matchedText.contains("sleeve") && matchedText.contains("length") -> return 1
-            matchedText.contains("back") || matchedText.contains("shoulder") -> return 2
+            matchedText.contains("manga") && (matchedText.contains("ancho") || matchedText.contains("anchura")) -> return 0
+            matchedText.contains("manga") && (matchedText.contains("largo") || matchedText.contains("longitud")) -> return 1
+            matchedText.contains("espalda") || matchedText.contains("hombros") -> return 2
         }
         
         return -1  // No match found
@@ -362,11 +362,11 @@ fun MainContent(
         ) {
             // Botón de micrófono
             IconButton(onClick = onMicClick) {
-                Icon(Icons.Default.Mic, contentDescription = "Speech to text")
+                Icon(Icons.Default.Mic, contentDescription = "Reconocimiento de voz")
             }
             // Botón de papelera
             IconButton(onClick = onClearClick) {
-                Icon(Icons.Default.Delete, contentDescription = "Clear all fields")
+                Icon(Icons.Default.Delete, contentDescription = "Borrar todos los campos")
             }
         }
     }
@@ -393,7 +393,7 @@ fun InputFields(
         OutlinedTextField(
             value = field1,
             onValueChange = onField1Change,
-            label = { Text("Sleeve width") },
+            label = { Text("Ancho de manga") },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -401,7 +401,7 @@ fun InputFields(
         OutlinedTextField(
             value = field2,
             onValueChange = onField2Change,
-            label = { Text("Sleeve length") },
+            label = { Text("Largo de manga") },
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -409,7 +409,7 @@ fun InputFields(
         OutlinedTextField(
             value = field3,
             onValueChange = onField3Change,
-            label = { Text("Back width") },
+            label = { Text("Ancho de espalda") },
             modifier = Modifier.fillMaxWidth()
         )
     }
