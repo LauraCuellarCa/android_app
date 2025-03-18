@@ -48,55 +48,135 @@ class MainActivity : ComponentActivity() {
     private var field2 by mutableStateOf("")
     private var field3 by mutableStateOf("")
 
-    // Map of field names to their corresponding indices
-    private val fieldIdentifiers = mapOf(
-        "Ancho de manga" to 0,
-        "Largo de manga" to 1,
-        "Ancho de espalda" to 2
+    /**
+     * Data class to represent a measurement field's configuration
+     * This makes it easier to add new fields or modify existing ones
+     */
+    data class FieldConfig(
+        val id: Int,
+        val displayName: String,
+        val keywords: List<String>,
+        val alternativeTerms: List<String> = emptyList()
     )
 
-    // Map of alternative terms to the standard field names
-    // This allows the app to recognize various ways users might refer to the same measurement
-    private val fieldAliases = mapOf(
-        "ancho de manga" to "ancho de manga",
-        "manga ancho" to "ancho de manga",
-        "anchura de manga" to "ancho de manga",
-        "ancho de la manga" to "ancho de manga",
-        
-        "largo de manga" to "largo de manga",
-        "manga largo" to "largo de manga",
-        "longitud de manga" to "largo de manga",
-        "largo de la manga" to "largo de manga",
-        
-        "ancho de espalda" to "ancho de espalda",
-        "espalda ancho" to "ancho de espalda",
-        "anchura de espalda" to "ancho de espalda",
-        "ancho de la espalda" to "ancho de espalda",
-        "ancho de hombros" to "ancho de espalda"
+    // Lista de configuraciones de campos
+    // NOTA: Para añadir nuevos campos o modificar los existentes, edita esta lista
+    private val fieldConfigs = listOf(
+        FieldConfig(
+            id = 0,
+            displayName = "Ancho de manga",
+            keywords = listOf("ancho", "manga"),  // Palabras clave para identificar este campo
+            alternativeTerms = listOf("ancho de manga", "manga ancho", "anchura de manga", "ancho de la manga")  // Frases alternativas completas
+        ),
+        FieldConfig(
+            id = 1,
+            displayName = "Largo de manga",
+            keywords = listOf("largo", "manga"),  // Palabras clave para identificar este campo
+            alternativeTerms = listOf("largo de manga", "manga largo", "longitud de manga", "largo de la manga")  // Frases alternativas completas
+        ),
+        FieldConfig(
+            id = 2,
+            displayName = "Ancho de espalda",
+            keywords = listOf("ancho", "espalda", "hombros"),  // Palabras clave para identificar este campo (incluye "hombros" como sinónimo)
+            alternativeTerms = listOf("ancho de espalda", "espalda ancho", "anchura de espalda", "ancho de la espalda", "ancho de hombros")  // Frases alternativas completas
+        )
+        // Para añadir un nuevo campo, crea una nueva entrada FieldConfig aquí
+        // Por ejemplo:
+        // FieldConfig(
+        //     id = 3,
+        //     displayName = "Largo de espalda",
+        //     keywords = listOf("largo", "espalda"),
+        //     alternativeTerms = listOf("largo de espalda", "espalda largo", "longitud de espalda")
+        // )
     )
 
-    // Mapping from recognized phrases to field indices
-    private val patternToFieldIndex = mapOf(
-        "ancho de manga" to 0,
-        "manga ancho" to 0,
-        "anchura de manga" to 0,
-        "ancho de la manga" to 0,
-        
-        "largo de manga" to 1,
-        "manga largo" to 1,
-        "longitud de manga" to 1,
-        "largo de la manga" to 1,
-        
-        "ancho de espalda" to 2,
-        "espalda ancho" to 2,
-        "anchura de espalda" to 2,
-        "ancho de la espalda" to 2,
-        "ancho de hombros" to 2
-    )
+    // Mapas derivados automáticamente de la configuración de campos (no es necesario modificarlos)
+    private val fieldIdentifiers by lazy {
+        fieldConfigs.associate { config -> config.displayName to config.id }
+    }
 
-    // Regular expression pattern to match field names and measurements with variations
-    // This regex captures the field name and the numerical value from speech input
-    private val measurementPattern = """(ancho\s+de\s+(?:la\s+)?manga|manga\s+ancho|anchura\s+de\s+manga|largo\s+de\s+(?:la\s+)?manga|manga\s+largo|longitud\s+de\s+manga|ancho\s+de\s+(?:la\s+)?espalda|espalda\s+ancho|anchura\s+de\s+espalda|ancho\s+de\s+hombros)(?:\s+(?:es|mide|igual\s+a|de|tiene|marca|aproximadamente|como))?\s+(\d+(?:\.\d+)?)\s*(?:cm|centímetros|centímetro|c\.m\.|cms)"""
+    private val fieldKeywords by lazy {
+        fieldConfigs.associate { config -> config.id to config.keywords }
+    }
+
+    private val fieldAliases by lazy {
+        fieldConfigs.flatMap { config ->
+            config.alternativeTerms.map { term -> term to term }
+        }.toMap()
+    }
+
+    private val patternToFieldIndex by lazy {
+        fieldConfigs.flatMap { config ->
+            config.alternativeTerms.map { term -> term to config.id }
+        }.toMap()
+    }
+
+    // Palabras de enlace entre el nombre del campo y el valor
+    // NOTA: Puedes añadir más palabras de enlace si es necesario
+    private val linkingWords = listOf("es", "mide", "igual a", "de", "tiene", "marca", "aproximadamente", "como")
+    
+    // Palabras a filtrar por no ser relevantes para la coincidencia de palabras clave
+    // NOTA: Modifica esta lista si hay otras palabras que deberían ignorarse
+    private val nonRelevantWords = listOf("de", "la", "el", "del", "los", "las", "un", "una")
+    
+    // Patrón de captura de valor numérico - admite números con punto decimal opcional
+    private val capturePattern = "\\d+(?:\\.\\d+)?"
+    
+    // Indicadores de unidades que pueden seguir al valor
+    // NOTA: Puedes añadir más unidades si es necesario
+    private val unitPatterns = listOf("cm", "centímetros", "centímetro", "c\\.m\\.", "cms")
+
+    /**
+     * Helper method to get the display name of a field by its ID
+     */
+    private fun getFieldDisplayName(fieldId: Int): String {
+        return fieldConfigs.find { it.id == fieldId }?.displayName ?: "Field $fieldId"
+    }
+
+    /**
+     * Genera un patrón regex a partir de una lista de palabras clave
+     * Sigue el algoritmo sugerido para la creación de patrones más generalizables
+     * 
+     * @param keywords Lista de palabras clave que identifican este campo
+     * @return Un patrón regex que coincidirá con texto que contenga estas palabras clave
+     */
+    private fun generatePatternFromKeywords(keywords: List<String>): String {
+        // Filtrar palabras relevantes y añadir límites de palabra
+        // NOTA: Esto elimina palabras como "de", "la", etc. y añade \b a cada palabra clave
+        val relevantKeywords = keywords.filter { word -> !nonRelevantWords.contains(word) }
+        val boundedKeywords = relevantKeywords.map { word -> "\\b$word\\b" }
+        
+        // Unir palabras clave con patrón que permite palabras arbitrarias entre ellas
+        // NOTA: Esto permite que las palabras clave aparezcan en cualquier orden y con otras palabras entre ellas
+        val keywordPattern = boundedKeywords.joinToString("(?:\\s+\\w+)*\\s+")
+        
+        // Crear patrón completo con palabras de enlace opcionales, captura de valor y unidades
+        // NOTA: La estructura del patrón es: (keywords) + opcional(palabras de enlace) + valor + unidades
+        val linkingPattern = "(?:\\s+(?:" + linkingWords.joinToString("|") + "))?"
+        val unitPattern = "\\s*(?:" + unitPatterns.joinToString("|") + ")"
+        
+        val finalPattern = "($keywordPattern)$linkingPattern\\s+($capturePattern)$unitPattern"
+        android.util.Log.d("PatternGeneration", "Generated pattern from keywords $keywords: $finalPattern")
+        return finalPattern
+    }
+
+    /**
+     * Genera todos los patrones regex que se utilizarán para hacer coincidir la entrada de voz
+     * @return Lista de objetos Regex compilados a partir de cadenas de patrón
+     */
+    private fun generateAllPatterns(): List<Regex> {
+        val patterns = fieldKeywords.map { (fieldIndex, keywords) ->
+            val pattern = generatePatternFromKeywords(keywords)
+            android.util.Log.d("RegexGeneration", "Field $fieldIndex (${fieldIdentifiers.entries.find { it.value == fieldIndex }?.key}): $pattern")
+            Regex(pattern, RegexOption.IGNORE_CASE)
+        }
+        android.util.Log.d("RegexGeneration", "Generated ${patterns.size} patterns")
+        return patterns
+    }
+
+    // Generar los patrones una vez para mejorar el rendimiento
+    // NOTA: Los patrones se generan automáticamente a partir de la configuración de campos
+    private val allPatterns: List<Regex> by lazy { generateAllPatterns() }
 
     // Activity result launcher for speech recognition
     // This handles the result from the speech recognition intent
@@ -167,123 +247,162 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Processes the text received from speech recognition
-     * Extracts measurement values and updates the appropriate fields
+     * Procesa el texto recibido del reconocimiento de voz
+     * Extrae valores de medida y actualiza los campos apropiados
      * 
-     * @param spokenText The text received from speech recognition
+     * @param spokenText El texto recibido del reconocimiento de voz
      */
     private fun processSpokenText(spokenText: String) {
-        // Show the full recognized text for debugging
+        // Mostrar el texto reconocido completo para depuración
         Toast.makeText(this, "Reconocido: $spokenText", Toast.LENGTH_SHORT).show()
         
-        // Debug log for the entire speech input
+        // Registro de depuración para toda la entrada de voz
         android.util.Log.d("SpeechRecognition", "Input: $spokenText")
         
-        // Convert to lowercase for case-insensitive matching
+        // Convertir a minúsculas para coincidencia sin distinción entre mayúsculas y minúsculas
         val lowerCaseText = spokenText.lowercase()
         
-        // Create a regex pattern with case insensitive flag
-        val pattern = Regex(measurementPattern, RegexOption.IGNORE_CASE)
-        
-        // Find all matches in the spoken text
-        val matches = pattern.findAll(lowerCaseText).toList()
-        
-        // Log the number of matches found
-        android.util.Log.d("SpeechRecognition", "Number of matches found: ${matches.size}")
-        
-        // Flag to track if we found any matches
+        // Bandera para rastrear si encontramos alguna coincidencia
         var matchFound = false
-        var matchCount = 0
         val updatedFields = mutableListOf<String>()
         
-        // Process each match found in the spoken text
-        for (match in matches) {
-            // Log each match for debugging
-            android.util.Log.d("SpeechRecognition", "Processing match: ${match.value}")
+        // Probar cada patrón contra el texto hablado
+        // NOTA: Este es el núcleo del sistema de coincidencia de patrones
+        android.util.Log.d("SpeechRecognition", "Trying to match with ${allPatterns.size} patterns")
+        allPatterns.forEachIndexed { index, pattern ->
+            val matches = pattern.findAll(lowerCaseText).toList()
+            android.util.Log.d("SpeechRecognition", "Pattern $index found ${matches.size} matches")
             
-            matchFound = true
-            matchCount++
-            
-            // Get the matched field name (could be an alias)
-            val matchedFieldName = match.groupValues[1].lowercase().trim()
-            android.util.Log.d("SpeechRecognition", "Matched field name: $matchedFieldName")
-            
-            // Find the field index based on the matched pattern
-            val fieldIndex = findFieldIndex(matchedFieldName)
-            if (fieldIndex == -1) {
-                android.util.Log.d("SpeechRecognition", "No field index found for: $matchedFieldName")
-                continue
+            for (match in matches) {
+                android.util.Log.d("SpeechRecognition", "Match found: ${match.value}")
+                matchFound = true
+                
+                // Obtener el índice de campo directamente del índice de la lista de patrones
+                val fieldIndex = index
+                
+                // Obtener el valor de medida del segundo grupo de captura (valor numérico)
+                val measurementValue = match.groupValues[2]
+                android.util.Log.d("SpeechRecognition", "Matched field $fieldIndex with value: $measurementValue")
+                
+                // Formatear la medida
+                val measurement = "$measurementValue cm"
+                
+                // Actualizar el campo apropiado basado en el índice de campo
+                updateFieldWithMeasurement(fieldIndex, measurement, updatedFields)
             }
-            
-            // Get the measurement value
-            val measurementValue = match.groupValues[2]
-            android.util.Log.d("SpeechRecognition", "Measurement value: $measurementValue")
-            
-            // Format the measurement
-            val measurement = "$measurementValue cm"
-            
-            // Update the appropriate field based on the field index
-            when (fieldIndex) {
-                0 -> {
-                    field1 = measurement
-                    updatedFields.add("Ancho de manga")
-                    android.util.Log.d("SpeechRecognition", "Updated field1 (Ancho de manga) to: $measurement")
-                }
-                1 -> {
-                    field2 = measurement
-                    updatedFields.add("Largo de manga")
-                    android.util.Log.d("SpeechRecognition", "Updated field2 (Largo de manga) to: $measurement")
-                }
-                2 -> {
-                    field3 = measurement
-                    updatedFields.add("Ancho de espalda")
-                    android.util.Log.d("SpeechRecognition", "Updated field3 (Ancho de espalda) to: $measurement")
+        }
+        
+        // Comprobaciones adicionales con el mapa pattern-to-field index para compatibilidad hacia atrás
+        // NOTA: Este es un sistema de respaldo si el enfoque principal falla
+        if (!matchFound) {
+            android.util.Log.d("SpeechRecognition", "No matches found with new patterns, trying fallback method")
+            // Comprobar contra patrones tradicionales como respaldo
+            for ((pattern, fieldIndex) in patternToFieldIndex) {
+                if (lowerCaseText.contains(pattern)) {
+                    // Extraer medida potencial usando regex
+                    val numericPattern = Regex("\\d+(?:\\.\\d+)?\\s*(?:cm|centímetros|centímetro|c\\.m\\.|cms)", RegexOption.IGNORE_CASE)
+                    val numericMatch = numericPattern.find(lowerCaseText)
+                    
+                    if (numericMatch != null) {
+                        matchFound = true
+                        val measurement = numericMatch.value
+                        android.util.Log.d("SpeechRecognition", "Fallback match found for field $fieldIndex: $measurement")
+                        updateFieldWithMeasurement(fieldIndex, measurement, updatedFields)
+                    }
                 }
             }
         }
         
-        // Show feedback to the user about which fields were updated
+        // Mostrar comentarios al usuario sobre qué campos se actualizaron
         if (matchFound) {
             val updatedFieldsStr = updatedFields.joinToString(", ")
             Toast.makeText(this, "Campos actualizados: $updatedFieldsStr", Toast.LENGTH_SHORT).show()
         } else {
-            // If no matches were found, show a helpful message with an example
+            // Si no se encontraron coincidencias, mostrar un mensaje útil con un ejemplo
             Toast.makeText(this, "No se detectaron medidas. Intente decir 'largo de manga es 57 cm'", Toast.LENGTH_LONG).show()
+        }
+    }
+    
+    /**
+     * Método auxiliar para actualizar un campo con un valor de medida
+     * Extrae la lógica para actualizar campos para evitar duplicación
+     * 
+     * NOTA: Si añades nuevos campos, necesitarás añadir nuevos casos aquí
+     */
+    private fun updateFieldWithMeasurement(fieldIndex: Int, measurement: String, updatedFields: MutableList<String>) {
+        val displayName = getFieldDisplayName(fieldIndex)
+        
+        when (fieldIndex) {
+            0 -> {
+                field1 = measurement
+                updatedFields.add(displayName)
+                android.util.Log.d("SpeechRecognition", "Updated field1 ($displayName) to: $measurement")
+            }
+            1 -> {
+                field2 = measurement
+                updatedFields.add(displayName)
+                android.util.Log.d("SpeechRecognition", "Updated field2 ($displayName) to: $measurement")
+            }
+            2 -> {
+                field3 = measurement
+                updatedFields.add(displayName)
+                android.util.Log.d("SpeechRecognition", "Updated field3 ($displayName) to: $measurement")
+            }
+            // Para añadir nuevos campos, agregar nuevos casos aquí
+            // Por ejemplo:
+            // 3 -> {
+            //     field4 = measurement  //hay que definir field4 arriba
+            //     updatedFields.add(displayName)
+            //     android.util.Log.d("SpeechRecognition", "Updated field4 ($displayName) to: $measurement")
+            // }
         }
     }
 
     /**
-     * Helper function to find field index from matched text
-     * Tries multiple matching strategies to identify the correct field
+     * Función auxiliar para encontrar el índice de campo a partir del texto coincidente
+     * Utiliza el nuevo enfoque basado en palabras clave primero, con respaldo al método antiguo
      * 
-     * @param matchedText The text to find a matching field for
-     * @return The index of the matched field, or -1 if no match found
+     * @param matchedText El texto para encontrar un campo coincidente
+     * @return El índice del campo coincidente, o -1 si no se encuentra coincidencia
      */
     private fun findFieldIndex(matchedText: String): Int {
-        // Try exact match first
+        // Probar el enfoque de palabras clave primero
+        // NOTA: Busca que TODAS las palabras clave de un campo estén en el texto
+        fieldKeywords.forEach { (index, keywords) ->
+            val allKeywordsPresent = keywords.all { keyword ->
+                matchedText.contains(keyword)
+            }
+            
+            if (allKeywordsPresent) {
+                return index
+            }
+        }
+        
+        // Probar coincidencia exacta como respaldo
         patternToFieldIndex[matchedText]?.let { return it }
         
-        // If no exact match, try partial matches
+        // Si no hay coincidencia exacta, probar coincidencias parciales
         for ((pattern, index) in patternToFieldIndex) {
             if (matchedText.contains(pattern)) {
                 return index
             }
         }
         
-        // Check for specific keywords as a fallback
+        // Comprobar palabras clave específicas como último recurso
         when {
             matchedText.contains("manga") && (matchedText.contains("ancho") || matchedText.contains("anchura")) -> return 0
             matchedText.contains("manga") && (matchedText.contains("largo") || matchedText.contains("longitud")) -> return 1
             matchedText.contains("espalda") || matchedText.contains("hombros") -> return 2
+            //añadir más casos aquí para nuevos campos
         }
         
-        return -1  // No match found
+        return -1  // No se encontró coincidencia
     }
 
     /**
-     * Helper function to capitalize first letter of each word
+     * Función auxiliar para capitalizar la primera letra de cada palabra
      * 
-     * @return A string with the first letter of each word capitalized
+     * @return Una cadena con la primera letra de cada palabra en mayúscula
      */
     private fun String.capitalize(): String {
         return this.split(" ").joinToString(" ") { word ->
@@ -292,12 +411,14 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Clears all measurement input fields
+     * Limpia todos los campos de entrada de medidas
+     * NOTA: Si añades más campos, actualiza este método para limpiarlos también
      */
     private fun clearAllFields() {
         field1 = ""
         field2 = ""
         field3 = ""
+        // Si añades más campos (field4, etc.), límpialos aquí también
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -373,7 +494,8 @@ fun MainContent(
 }
 
 /**
- * Composable that contains the three measurement input fields
+ * Composable que contiene los tres campos de entrada de medidas
+ * NOTA: Si añades nuevos campos, actualiza este composable
  */
 @Composable
 fun InputFields(
@@ -381,15 +503,17 @@ fun InputFields(
     field1: String,
     field2: String,
     field3: String,
+    // Si añades más campos, agrega sus parámetros aquí
     onField1Change: (String) -> Unit,
     onField2Change: (String) -> Unit,
     onField3Change: (String) -> Unit,
+    // Si añades más campos, agrega sus manejadores de cambio aquí
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Sleeve width input field
+        // Campo de ancho de manga
         OutlinedTextField(
             value = field1,
             onValueChange = onField1Change,
@@ -397,7 +521,7 @@ fun InputFields(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Sleeve length input field
+        // Campo de largo de manga
         OutlinedTextField(
             value = field2,
             onValueChange = onField2Change,
@@ -405,13 +529,23 @@ fun InputFields(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Back width input field
+        // Campo de ancho de espalda
         OutlinedTextField(
             value = field3,
             onValueChange = onField3Change,
             label = { Text("Ancho de espalda") },
             modifier = Modifier.fillMaxWidth()
         )
+        
+        // Para añadir un nuevo campo, agrega otro OutlinedTextField aquí:
+        /*
+        OutlinedTextField(
+            value = field4,
+            onValueChange = onField4Change,
+            label = { Text("Nombre del nuevo campo") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        */
     }
 }
 
