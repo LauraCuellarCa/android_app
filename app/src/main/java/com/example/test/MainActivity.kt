@@ -10,13 +10,22 @@ import androidx.compose.foundation.layout.fillMaxSize // Para Modifier.fillMaxSi
 import androidx.compose.foundation.layout.padding // Para Modifier.padding()
 import androidx.compose.material3.Scaffold // Para Scaffold
 import androidx.compose.ui.Modifier // Para Modifier
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 
 
 class MainActivity : ComponentActivity() {
     private val keyValues = listOf(
         "ancho de manga", "ancho de espalda", "largo de manga", "largo de pecho"
     )
-    private var fields = MutableList(keyValues.size) { "" } // Lista de campos basada en la cantidad de key_values
+    // Usar mutableStateListOf para que los cambios sean observables por Compose
+    private val fields = mutableStateListOf<String>().apply {
+        addAll(List(keyValues.size) { "" })
+    }
 
     // Speech recognition helper
     private lateinit var speechRecognitionHelper: SpeechRecognitionHelper
@@ -57,17 +66,24 @@ class MainActivity : ComponentActivity() {
 
         // Llamar a MeasurementProcessor pasando el mapa keyMap y la función updateField
         MeasurementProcessor.process(spokenText, keyMap) { index, measurement ->
-            fields[index] = measurement  // Actualizamos la lista fields
+            updateField(index, measurement)
         }
     }
 
     private fun updateField(fieldIndex: Int, measurement: String) {
         // Asignar el valor al campo correspondiente según el índice
-        fields[fieldIndex] = measurement
+        // Esto gatillará una recomposición automática en Compose
+        runOnUiThread {
+            fields[fieldIndex] = measurement
+        }
     }
 
     private fun clearAllFields() {
-        fields.fill("") // Limpiamos todos los campos de la lista
+        runOnUiThread {
+            for (i in fields.indices) {
+                fields[i] = ""
+            }
+        }
     }
 
     override fun onDestroy() {
