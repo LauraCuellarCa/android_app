@@ -14,16 +14,29 @@ class MeasurementProcessor {
             val pattern = Regex(measurementPattern, RegexOption.IGNORE_CASE)
             val matches = pattern.findAll(lowerCaseText).toList()
 
-            Log.d("SpokenText: ", lowerCaseText)
+            Log.d("MeasurementProcessor", "Texto reconocido: $lowerCaseText")
+            Log.d("MeasurementProcessor", "Claves disponibles: ${keyMap.keys.joinToString()}")
+            Log.d("MeasurementProcessor", "Número de coincidencias encontradas: ${matches.size}")
+
+            if (matches.isEmpty()) {
+                Log.d("MeasurementProcessor", "No se encontraron coincidencias con el patrón")
+                return
+            }
 
             for (match in matches) {
                 val keyValue = match.groups["keyValue"]?.value?.trim() ?: continue
                 val numberValue = match.groups["numberValue"]?.value ?: continue
                 val measurement = "$numberValue cm"
 
+                Log.d("MeasurementProcessor", "Coincidencia - Clave: '$keyValue', Valor: '$numberValue'")
+                
                 // Si el key_value está en el mapa, asignamos el valor al campo correspondiente
-                keyMap[keyValue]?.let { fieldIndex ->
+                val fieldIndex = keyMap[keyValue]
+                if (fieldIndex != null) {
+                    Log.d("MeasurementProcessor", "Asignando '$measurement' al campo $fieldIndex ($keyValue)")
                     updateField(fieldIndex, measurement)
+                } else {
+                    Log.d("MeasurementProcessor", "Clave '$keyValue' no encontrada en el mapa")
                 }
             }
         }
