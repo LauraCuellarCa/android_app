@@ -55,7 +55,7 @@ class MeasurementProcessor {
         // Construir un patrón para unidades como alternativas (cm|centímetros|...)
         private val unitsPattern = units.joinToString("|")
 
-        // Expresión regular modificada para separar correctamente número y unidades
+        // Expresión regex modificada para separar correctamente número y unidades
         private val measurementPattern =
             """(?<keyValue>\b\w+(?:\s+\w+)*\b)(?:\s+(?:es|es igual a|mide|de|en|lee|muestra|aproximadamente|alrededor de|aproximadamente\s+es|era))?\s+(?<numberValue>\d+(?:\.\d+)?|\b(?:${spanishNumbers.keys.joinToString("|")})\b)(?:\s+(?:$unitsPattern))?"""
 
