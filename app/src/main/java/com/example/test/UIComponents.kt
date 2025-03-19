@@ -9,13 +9,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 
 @Composable
 fun MainContent(
     modifier: Modifier = Modifier,
     keyValues: List<String>,  // Lista de key_values
     fields: List<String>,  // Lista de campos dinámicos
+    debugText: String = "",  // Texto para depuración
     onFieldChange: (Int, String) -> Unit,  // Función para cambiar el valor de un campo específico
     onMicClick: () -> Unit,
     onClearClick: () -> Unit
@@ -36,6 +38,18 @@ fun MainContent(
                 modifier = Modifier.fillMaxWidth()
             )
         }
+        
+        // Agregar texto de depuración para mostrar lo que se reconoció
+        if (debugText.isNotEmpty()) {
+            Text(
+                text = debugText,
+                color = Color.Gray,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp)
+            )
+        }
+        
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
