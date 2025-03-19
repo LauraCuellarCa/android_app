@@ -59,12 +59,12 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun processSpokenText(spokenText: String) {
-        // Actualizar el texto de depuración para mostrar lo que se reconoció
+        // Actualizar el texto de debugging para mostrar lo que se reconoció
         runOnUiThread {
             recognizedText.value = "Reconocido: \"$spokenText\""
         }
         
-        // Log para depuración
+        // Log para debugging
         Log.d("SpeechRecognition", "Recognized text: $spokenText")
         
         // Crear el mapa de keyMap desde la lista de key_values
@@ -91,7 +91,7 @@ class MainActivity : ComponentActivity() {
             for (i in fields.indices) {
                 fields[i] = ""
             }
-            // También limpiar el texto de depuración
+            // También limpiar el texto de debugging
             recognizedText.value = ""
         }
     }

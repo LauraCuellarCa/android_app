@@ -17,7 +17,7 @@ fun MainContent(
     modifier: Modifier = Modifier,
     keyValues: List<String>,  // Lista de key_values
     fields: List<String>,  // Lista de campos dinámicos
-    debugText: String = "",  // Texto para depuración
+    debugText: String = "",  // Texto para debugging
     onFieldChange: (Int, String) -> Unit,  // Función para cambiar el valor de un campo específico
     onMicClick: () -> Unit,
     onClearClick: () -> Unit
@@ -39,7 +39,7 @@ fun MainContent(
             )
         }
         
-        // Agregar texto de depuración para mostrar lo que se reconoció
+        // Agregar texto de debugging para mostrar lo que se reconoció
         if (debugText.isNotEmpty()) {
             Text(
                 text = debugText,
