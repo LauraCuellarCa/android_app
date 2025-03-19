@@ -46,9 +46,23 @@ class MeasurementProcessor {
             "cien" to "100", "ciento" to "100"
         )
 
-        // Expresión regular con Named Groups para extraer key_value y number_value (en dígitos o palabras)
+        // Lista de unidades de medida para evitar capturarlas como números
+        private val units = listOf(
+            "cm", "centímetros", "centímetro", "c.m.", "cms", 
+            "m", "metros", "metro", "milímetros", "milímetro", "mm"
+        )
+        
+        // Construir un patrón para unidades como alternativas (cm|centímetros|...)
+        private val unitsPattern = units.joinToString("|")
+
+        // Expresión regular modificada para separar correctamente número y unidades
         private val measurementPattern =
-            """(?<keyValue>\b\w+(?:\s+\w+)*\b)(?:\s+(?:es|es igual a|mide|de|en|lee|muestra|aproximadamente|alrededor de|aproximadamente\s+es|era))?\s+(?<numberValue>(?:\d+(?:\.\d+)?)|(?:\w+))\s*(?:cm|centímetros|centímetro|c\.m\.|cms|m|metros|milímetros|mm)?"""
+            """(?<keyValue>\b\w+(?:\s+\w+)*\b)(?:\s+(?:es|es igual a|mide|de|en|lee|muestra|aproximadamente|alrededor de|aproximadamente\s+es|era))?\s+(?<numberValue>\d+(?:\.\d+)?|\b(?:${spanishNumbers.keys.joinToString("|")})\b)(?:\s+(?:$unitsPattern))?"""
+
+        // Debug: Mostrar el patrón construido
+        init {
+            Log.d("MeasurementProcessor", "Patrón regex: $measurementPattern")
+        }
 
         // Método para convertir números escritos a dígitos
         private fun convertWordToNumber(word: String): String? {
@@ -67,6 +81,8 @@ class MeasurementProcessor {
 
             if (matches.isEmpty()) {
                 Log.d("MeasurementProcessor", "No se encontraron coincidencias con el patrón")
+                // Alternativa: método simple para extraer datos
+                trySimpleMatching(lowerCaseText, keyMap, updateField)
                 return
             }
 
@@ -97,6 +113,37 @@ class MeasurementProcessor {
                     updateField(fieldIndex, measurement)
                 } else {
                     Log.d("MeasurementProcessor", "Clave '$keyValue' no encontrada en el mapa")
+                }
+            }
+        }
+        
+        // Método alternativo de matching para casos donde el regex falla
+        private fun trySimpleMatching(text: String, keyMap: Map<String, Int>, updateField: (Int, String) -> Unit) {
+            Log.d("MeasurementProcessor", "Intentando método simple de emparejamiento")
+            
+            // Buscar cada clave por separado
+            for ((key, index) in keyMap) {
+                if (text.contains(key)) {
+                    // Si encontramos la clave, buscar número después de la clave
+                    val keyPosition = text.indexOf(key) + key.length
+                    val textAfterKey = text.substring(keyPosition)
+                    
+                    // Verificar todos los números en español después de la clave
+                    for ((numWord, numValue) in spanishNumbers) {
+                        if (textAfterKey.contains(numWord)) {
+                            Log.d("MeasurementProcessor", "Método simple - Encontrado: '$key' con valor '$numWord' ($numValue)")
+                            updateField(index, "$numValue cm")
+                            break
+                        }
+                    }
+                    
+                    // Buscar también dígitos
+                    val digitMatch = Regex("\\d+").find(textAfterKey)
+                    if (digitMatch != null) {
+                        val numValue = digitMatch.value
+                        Log.d("MeasurementProcessor", "Método simple - Encontrado: '$key' con valor numérico '$numValue'")
+                        updateField(index, "$numValue cm")
+                    }
                 }
             }
         }
