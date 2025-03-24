@@ -12,7 +12,10 @@ import androidx.compose.material3.Scaffold // Para Scaffold
 import androidx.compose.ui.Modifier // Para Modifier
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import android.util.Log
+import java.text.Normalizer
+import java.util.Locale
+import com.example.tuapp.util.SpanishNumberNormalizer
+
 
 class MainActivity : ComponentActivity() {
     private val keyValues = listOf(
@@ -58,29 +61,62 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    fun normalizarKeyValue(key: String): String {
+        return key
+            .lowercase(Locale.getDefault())
+            .replace(Regex("[^a-z0-9áéíóúüñ\\s]"), "")  // Conserva letras, números y espacios
+            .split(" ")
+            .filter { it.length >= 4 }
+            .joinToString(" ")
+            .trim()
+    }
+
+    private fun normalizeText(text: String): String {
+        return Normalizer.normalize(text, Normalizer.Form.NFD)
+            .lowercase(Locale.getDefault())
+            .replace("[^a-z0-9\\s]".toRegex(), "")
+            .replace("\\s+".toRegex(), " ")
+            .trim()
+    }
+
+    private fun removeShortWords(text: String, minLength: Int = 4): String {
+        return text.split(" ")
+            .filter { it.length >= minLength }
+            .joinToString(" ")
+    }
+
+
     private fun processSpokenText(spokenText: String) {
-        // Actualizar el texto de debugging para mostrar lo que se reconoció
+        // Paso 1: Normalización básica del texto reconocido
+        val cleanText = normalizeText(spokenText)
+
+        val fullyNormalizedText = SpanishNumberNormalizer.normalize(cleanText)
+
+        // Paso 2: Eliminar palabras cortas (menos de 4 caracteres)
+        val filteredText = removeShortWords(fullyNormalizedText)
+
+        // Mostrar el texto procesado en la UI
         runOnUiThread {
-            recognizedText.value = "Reconocido: \"$spokenText\""
-        }
-        
-        // Log para debugging
-        Log.d("SpeechRecognition", "Recognized text: $spokenText")
-        
-        // Crear el mapa de keyMap desde la lista de key_values
-        val keyMap = keyValues.withIndex().associate { (index, key) ->
-            key to index
+            recognizedText.value = """
+            Texto procesado: "$filteredText"
+        """.trimIndent()
         }
 
-        // Llamar a MeasurementProcessor pasando el mapa keyMap y la función updateField
-        MeasurementProcessor.process(spokenText, keyMap) { index, measurement ->
+        // Crear el mapa de claves normalizadas
+        val normalizedKeyMap = keyValues
+            .withIndex()
+            .associate { (index, key) ->
+                normalizarKeyValue(key) to index
+            }
+
+        // Procesar el texto con MeasurementProcessor
+        MeasurementProcessor.process(filteredText, normalizedKeyMap) { index, measurement ->
             updateField(index, measurement)
         }
     }
 
     private fun updateField(fieldIndex: Int, measurement: String) {
         // Asignar el valor al campo correspondiente según el índice
-        // Esto gatillará una recomposición automática en Compose
         runOnUiThread {
             fields[fieldIndex] = measurement
         }
@@ -91,7 +127,6 @@ class MainActivity : ComponentActivity() {
             for (i in fields.indices) {
                 fields[i] = ""
             }
-            // También limpiar el texto de debugging
             recognizedText.value = ""
         }
     }

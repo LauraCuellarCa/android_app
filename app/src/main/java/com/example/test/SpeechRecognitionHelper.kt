@@ -1,6 +1,7 @@
 package com.example.test
 
 import android.Manifest
+import android.os.Build
 import android.content.Intent
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
@@ -10,7 +11,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import android.os.Bundle
-import java.util.Locale
 import androidx.activity.ComponentActivity
 
 class SpeechRecognitionHelper(
@@ -71,15 +71,22 @@ class SpeechRecognitionHelper(
                 setRecognitionListener(recognitionListener)
             }
             val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_WEB_SEARCH) // Más preciso para comandos
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-ES")
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "es-ES")
-                putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, true)
-                putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, false)
-                putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 1000L)  // Mínimo de 1 segundo
-                putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1500L)
-                putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1000L)
-                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true) // Para resultados en tiempo real
+
+                // Configuración específica para números:
+                putExtra("android.speech.extra.GET_AUDIO", false) // Reduce sobrecarga
+                putExtra("android.speech.extra.GET_AUDIO_FORMAT", "audio/AMR") // Formato ligero
+
+                // Timeouts ajustados:
+                putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 2000L) // Mínimo 2 segundos
+                putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 2000L)
+                putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1500L)
+
+                // Configuración de resultados:
+                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3) // Permite alternativas
             }
             // Mostrar mensaje visual de que está escuchando
             Toast.makeText(activity, "Escuchando...", Toast.LENGTH_SHORT).show()
