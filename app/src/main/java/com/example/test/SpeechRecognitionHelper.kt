@@ -1,7 +1,6 @@
 package com.example.test
 
 import android.Manifest
-import android.os.Build
 import android.content.Intent
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
