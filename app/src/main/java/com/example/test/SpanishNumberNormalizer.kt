@@ -69,36 +69,24 @@ object SpanishNumberNormalizer {
     }
 
     fun normalize(text: String): String {
-        val words = text.split(" ")
+        val words = text.split(" ").filter { it.isNotBlank() }
         val result = StringBuilder()
         var i = 0
 
         while (i < words.size) {
-            val currentWord = words[i].lowercase()
 
-            // Detección de números decimales (ej: "tres punto cinco")
-            if (i + 2 < words.size && decimalSeparators.contains(words[i+1].lowercase())) {
-                val integerPart = numberMap[currentWord] ?: currentWord
-                val decimalPart = numberMap[words[i+2].lowercase()] ?: words[i+2]
-                result.append("$integerPart.$decimalPart")
-                i += 3
-            }
-            // Detección de números normales (1-999)
-            else {
-                val possibleNumbers = listOf(
-                    currentWord,
-                    if (i+1 < words.size) "$currentWord ${words[i+1]}" else null,
-                    if (i+2 < words.size) "$currentWord ${words[i+1]} ${words[i+2]}" else null
-                ).filterNotNull()
-
-                val numberMatch = possibleNumbers.firstOrNull { numberMap.containsKey(it) }
-
-                if (numberMatch != null) {
-                    result.append(numberMap[numberMatch])
-                    i += numberMatch.split(" ").size
-                } else {
-                    result.append(words[i])
-                    i++
+            when {
+                // Caso 1: Número decimal (ej: "tres punto cinco")
+                isDecimalNumber(words, i) -> {
+                    val (number, wordsConsumed) = parseDecimalNumber(words, i)
+                    result.append(number)
+                    i += wordsConsumed
+                }
+                // Caso 2: Número entero (simple o compuesto)
+                else -> {
+                    val (number, wordsConsumed) = parseIntegerNumber(words, i)
+                    result.append(number ?: words[i])
+                    i += wordsConsumed
                 }
             }
 
@@ -106,5 +94,31 @@ object SpanishNumberNormalizer {
         }
 
         return result.toString()
+    }
+
+    private fun isDecimalNumber(words: List<String>, index: Int): Boolean {
+        return index + 2 < words.size &&
+                decimalSeparators.contains(words[index + 1].lowercase()) &&
+                numberMap.containsKey(words[index].lowercase()) &&
+                numberMap.containsKey(words[index + 2].lowercase())
+    }
+
+    private fun parseDecimalNumber(words: List<String>, index: Int): Pair<String, Int> {
+        val integerPart = numberMap[words[index].lowercase()]!!
+        val decimalPart = numberMap[words[index + 2].lowercase()]!!
+        return Pair("$integerPart.$decimalPart", 3)
+    }
+
+    private fun parseIntegerNumber(words: List<String>, index: Int): Pair<String?, Int> {
+        // Probamos con combinaciones de 3, 2 y 1 palabras
+        for (length in 3 downTo 1) {
+            if (index + length - 1 < words.size) {
+                val phrase = words.subList(index, index + length).joinToString(" ").lowercase()
+                numberMap[phrase]?.let {
+                    return Pair(it, length)
+                }
+            }
+        }
+        return Pair(null, 1)
     }
 }
