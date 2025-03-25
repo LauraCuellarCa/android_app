@@ -11,6 +11,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 
 @Composable
 fun MainContent(
@@ -23,30 +27,34 @@ fun MainContent(
     onClearClick: () -> Unit
 ) {
     Column(
-        modifier = modifier.fillMaxSize().padding(16.dp),
+        modifier = modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(text = "Formulario de Medidas")
+        // Title removed to match the screenshot style
+        
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Crear los campos dinámicamente
+        // Crear los campos dinámicamente usando el nuevo componente
         keyValues.forEachIndexed { index, keyValue ->
-            OutlinedTextField(
+            CustomUnderlinedTextField(
+                label = keyValue,
                 value = fields.getOrElse(index) { "" },
                 onValueChange = { newValue -> onFieldChange(index, newValue) },
-                label = { Text(keyValue) },  // Usamos el key_value como label
                 modifier = Modifier.fillMaxWidth()
             )
         }
+        
+        Spacer(modifier = Modifier.height(24.dp))
         
         // Agregar texto de debugging para mostrar lo que se reconoció
         if (debugText.isNotEmpty()) {
             Text(
                 text = debugText,
                 color = Color.Gray,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp)
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
             )
         }
         
@@ -60,6 +68,76 @@ fun MainContent(
             IconButton(onClick = onClearClick) {
                 Icon(Icons.Default.Delete, contentDescription = "Clear all fields")
             }
+        }
+    }
+}
+
+@Composable
+fun CustomUnderlinedTextField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Label on the left side
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Black,
+            modifier = Modifier
+                .weight(0.6f)
+                .padding(end = 8.dp)
+        )
+        
+        // Custom text field with just an underline
+        Box(
+            modifier = Modifier
+                .weight(0.4f)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Value
+                BasicTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    textStyle = TextStyle(
+                        color = Color.Black,
+                        fontSize = MaterialTheme.typography.headlineSmall.fontSize,
+                        textAlign = TextAlign.End
+                    ),
+                    singleLine = true,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(bottom = 8.dp)
+                )
+                
+                // "cm" suffix always visible
+                Text(
+                    text = "cm",
+                    color = Color.Black,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier
+                        .padding(start = 4.dp, bottom = 8.dp)
+                )
+            }
+            
+            // Underline
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(Color.LightGray)
+                    .align(Alignment.BottomCenter)
+            )
         }
     }
 }
