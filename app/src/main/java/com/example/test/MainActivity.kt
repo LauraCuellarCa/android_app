@@ -6,20 +6,33 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.example.test.ui.theme.TestTheme
 import android.widget.Toast // Para Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxSize // Para Modifier.fillMaxSize()
 import androidx.compose.foundation.layout.padding // Para Modifier.padding()
 import androidx.compose.material3.Scaffold // Para Scaffold
 import androidx.compose.ui.Modifier // Para Modifier
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember //this idk
 import java.text.Normalizer
 import java.util.Locale
 import com.example.tuapp.util.SpanishNumberNormalizer
+//import com.example.test.SpanishNumberNormalizer
 
 
 class MainActivity : ComponentActivity() {
     private val keyValues = listOf(
-        "ancho de manga", "ancho de espalda", "largo de manga", "largo de pecho"
+        "ANCHO DE PECHO", 
+        "ANCHO DELANTERO (A 1/2 SISA)", 
+        "ANCHO DE CINTURA", 
+        "ANCHO DEL BAJO",
+        "ANCHO INFERIOR",
+        "ALTO DEL RIB DEL BAJO",
+        "LARGO DEL CUERPO",
+        "LARGO DE LA ESPALDA",
+        "LARGO DE HOMBRO"
     )
     // Usar mutableStateListOf para que los cambios sean observables por Compose
     private val fields = mutableStateListOf<String>().apply {
@@ -31,6 +44,11 @@ class MainActivity : ComponentActivity() {
 
     // Speech recognition helper
     private lateinit var speechRecognitionHelper: SpeechRecognitionHelper
+
+    // Screen state
+    private enum class Screen {
+        WELCOME, SELECTION, MAIN
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,17 +63,60 @@ class MainActivity : ComponentActivity() {
         setContent {
             TestTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    MainContent(
-                        modifier = Modifier.padding(innerPadding),
-                        keyValues = keyValues,
-                        fields = fields,
-                        debugText = recognizedText.value,
-                        onFieldChange = { index, value ->
-                            fields[index] = value // Actualizamos el campo dinámicamente
-                        },
-                        onMicClick = { speechRecognitionHelper.checkPermissionAndStartRecognition() },
-                        onClearClick = { clearAllFields() }
-                    )
+                    // Track current screen
+                    val currentScreen = remember { mutableStateOf(Screen.WELCOME) }
+                    
+                    // Welcome screen with animation
+                    AnimatedVisibility(
+                        visible = currentScreen.value == Screen.WELCOME,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        WelcomeScreen(
+                            onContinueClick = {
+                                currentScreen.value = Screen.SELECTION
+                            }
+                        )
+                    }
+                    
+                    // Selection screen with animation
+                    AnimatedVisibility(
+                        visible = currentScreen.value == Screen.SELECTION,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        SelectionScreen(
+                            onBackClick = {
+                                currentScreen.value = Screen.WELCOME
+                            },
+                            onValidacionMuestraClick = {
+                                currentScreen.value = Screen.MAIN
+                            }
+                        )
+                    }
+                    
+                    // Main content with animation
+                    AnimatedVisibility(
+                        visible = currentScreen.value == Screen.MAIN,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        MainContent(
+                            modifier = Modifier.padding(innerPadding),
+                            keyValues = keyValues,
+                            fields = fields,
+                            debugText = recognizedText.value,
+                            onFieldChange = { index, value ->
+                                fields[index] = value // Actualizamos el campo dinámicamente
+                            },
+                            onMicClick = { speechRecognitionHelper.checkPermissionAndStartRecognition() },
+                            onClearClick = { clearAllFields() },
+                            onBackClick = {
+                                // Return to the selection screen
+                                currentScreen.value = Screen.SELECTION
+                            }
+                        )
+                    }
                 }
             }
         }
