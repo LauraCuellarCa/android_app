@@ -39,35 +39,34 @@ fun SelectionScreen(
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.Start
         ) {
-            // Back button at the top left
-            Row(
+            // Back button at the top left with larger touch area
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(top = 32.dp, bottom = 16.dp)
             ) {
                 Row(
                     modifier = Modifier
                         .clickable { onBackClick() }
-                        .padding(vertical = 8.dp),
+                        .padding(vertical = 12.dp, horizontal = 8.dp)
+                        .height(48.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
                         contentDescription = "Volver",
-                        tint = Color.Black
+                        tint = Color.Black,
+                        modifier = Modifier.size(24.dp)
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Volver",
                         color = Color.Black,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
                 }
             }
-            
-            Spacer(modifier = Modifier.height(24.dp))
             
             // Title with letter spacing
             Text(
