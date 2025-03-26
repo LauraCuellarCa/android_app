@@ -45,6 +45,11 @@ class MainActivity : ComponentActivity() {
     // Speech recognition helper
     private lateinit var speechRecognitionHelper: SpeechRecognitionHelper
 
+    // Screen state
+    private enum class Screen {
+        WELCOME, SELECTION, MAIN
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -58,25 +63,41 @@ class MainActivity : ComponentActivity() {
         setContent {
             TestTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    // Always start with the welcome screen
-                    val showWelcomeScreen = remember { mutableStateOf(true) }
+                    // Track current screen
+                    val currentScreen = remember { mutableStateOf(Screen.WELCOME) }
                     
                     // Welcome screen with animation
                     AnimatedVisibility(
-                        visible = showWelcomeScreen.value,
+                        visible = currentScreen.value == Screen.WELCOME,
                         enter = fadeIn(),
                         exit = fadeOut()
                     ) {
                         WelcomeScreen(
                             onContinueClick = {
-                                showWelcomeScreen.value = false
+                                currentScreen.value = Screen.SELECTION
+                            }
+                        )
+                    }
+                    
+                    // Selection screen with animation
+                    AnimatedVisibility(
+                        visible = currentScreen.value == Screen.SELECTION,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        SelectionScreen(
+                            onBackClick = {
+                                currentScreen.value = Screen.WELCOME
+                            },
+                            onValidacionMuestraClick = {
+                                currentScreen.value = Screen.MAIN
                             }
                         )
                     }
                     
                     // Main content with animation
                     AnimatedVisibility(
-                        visible = !showWelcomeScreen.value,
+                        visible = currentScreen.value == Screen.MAIN,
                         enter = fadeIn(),
                         exit = fadeOut()
                     ) {
@@ -91,8 +112,8 @@ class MainActivity : ComponentActivity() {
                             onMicClick = { speechRecognitionHelper.checkPermissionAndStartRecognition() },
                             onClearClick = { clearAllFields() },
                             onBackClick = {
-                                // Return to the welcome screen
-                                showWelcomeScreen.value = true
+                                // Return to the selection screen
+                                currentScreen.value = Screen.SELECTION
                             }
                         )
                     }
