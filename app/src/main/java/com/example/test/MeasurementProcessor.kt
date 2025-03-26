@@ -10,6 +10,8 @@ class MeasurementProcessor {
 
 
         fun process(spokenText: String, keyMap: Map<String, Int>, updateField: (Int, String) -> Unit) {
+
+
             val matches = Regex(measurementPattern).findAll(spokenText)
 
             if (matches.none()) {

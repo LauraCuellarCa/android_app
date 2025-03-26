@@ -82,7 +82,9 @@ class MainActivity : ComponentActivity() {
     private fun removeShortWords(text: String, minLength: Int = 4): String {
         return text.split(" ")
             .filter { word ->
-                word.length >= minLength || word.equals("con", ignoreCase = true)
+                word.length >= minLength ||
+                        word.equals("con", ignoreCase = true) ||
+                        word.any { it.isDigit() }
             }
             .joinToString(" ")
     }
@@ -92,15 +94,16 @@ class MainActivity : ComponentActivity() {
         // Paso 1: Normalización básica del texto reconocido
         val cleanText = normalizeText(spokenText)
 
-        // Paso 2: Eliminar palabras cortas (menos de 3 caracteres)
-        val filteredText = removeShortWords(cleanText)
+        val fullyNormalizedText = SpanishNumberNormalizer.normalize(cleanText)
 
-        val fullyNormalizedText = SpanishNumberNormalizer.normalize(filteredText)
+        // Paso 2: Eliminar palabras cortas (menos de 3 caracteres)
+        val filteredText = removeShortWords(fullyNormalizedText)
+
 
         // Mostrar el texto procesado en la UI
         runOnUiThread {
             recognizedText.value = """
-            Texto procesado: "$fullyNormalizedText"
+            Texto procesado: "$filteredText"
         """.trimIndent()
         }
 
@@ -112,7 +115,7 @@ class MainActivity : ComponentActivity() {
             }
 
         // Procesar el texto con MeasurementProcessor
-        MeasurementProcessor.process(fullyNormalizedText, normalizedKeyMap) { index, measurement ->
+        MeasurementProcessor.process(filteredText, normalizedKeyMap) { index, measurement ->
             updateField(index, measurement)
         }
     }
