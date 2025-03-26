@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember //this idk
 import java.text.Normalizer
 import java.util.Locale
 import com.example.tuapp.util.SpanishNumberNormalizer
+//import com.example.test.SpanishNumberNormalizer
 
 
 class MainActivity : ComponentActivity() {
