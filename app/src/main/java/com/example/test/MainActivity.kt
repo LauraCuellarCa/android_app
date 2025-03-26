@@ -6,12 +6,16 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.example.test.ui.theme.TestTheme
 import android.widget.Toast // Para Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxSize // Para Modifier.fillMaxSize()
 import androidx.compose.foundation.layout.padding // Para Modifier.padding()
 import androidx.compose.material3.Scaffold // Para Scaffold
 import androidx.compose.ui.Modifier // Para Modifier
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember //this idk
 import java.text.Normalizer
 import java.util.Locale
 import com.example.tuapp.util.SpanishNumberNormalizer
@@ -53,17 +57,40 @@ class MainActivity : ComponentActivity() {
         setContent {
             TestTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    MainContent(
-                        modifier = Modifier.padding(innerPadding),
-                        keyValues = keyValues,
-                        fields = fields,
-                        debugText = recognizedText.value,
-                        onFieldChange = { index, value ->
-                            fields[index] = value // Actualizamos el campo dinámicamente
-                        },
-                        onMicClick = { speechRecognitionHelper.checkPermissionAndStartRecognition() },
-                        onClearClick = { clearAllFields() }
-                    )
+                    // Always start with the welcome screen
+                    val showWelcomeScreen = remember { mutableStateOf(true) }
+                    
+                    // Welcome screen with animation
+                    AnimatedVisibility(
+                        visible = showWelcomeScreen.value,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        WelcomeScreen(
+                            onContinueClick = {
+                                showWelcomeScreen.value = false
+                            }
+                        )
+                    }
+                    
+                    // Main content with animation
+                    AnimatedVisibility(
+                        visible = !showWelcomeScreen.value,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        MainContent(
+                            modifier = Modifier.padding(innerPadding),
+                            keyValues = keyValues,
+                            fields = fields,
+                            debugText = recognizedText.value,
+                            onFieldChange = { index, value ->
+                                fields[index] = value // Actualizamos el campo dinámicamente
+                            },
+                            onMicClick = { speechRecognitionHelper.checkPermissionAndStartRecognition() },
+                            onClearClick = { clearAllFields() }
+                        )
+                    }
                 }
             }
         }
