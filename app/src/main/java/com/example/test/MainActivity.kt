@@ -27,9 +27,7 @@ class MainActivity : ComponentActivity() {
         "ALTO DEL RIB DEL BAJO",
         "LARGO DEL CUERPO",
         "LARGO DE LA ESPALDA",
-        "LARGO DE HOMBRO",
-        "LARGO DE MANGA",
-        "SISAS MEDIDAS EN LINEA RECTA"
+        "LARGO DE HOMBRO"
     )
     // Usar mutableStateListOf para que los cambios sean observables por Compose
     private val fields = mutableStateListOf<String>().apply {
