@@ -19,7 +19,14 @@ import com.example.tuapp.util.SpanishNumberNormalizer
 
 class MainActivity : ComponentActivity() {
     private val keyValues = listOf(
-        "ancho de manga", "ancho de espalda", "largo de manga", "largo de pecho"
+        "ANCHO DE PECHO", 
+        "ANCHO DELANTERO (A 1/2 SISA)", 
+        "ANCHO DE CINTURA", 
+        "ANCHO DEL BAJO",
+        "ANCHO INFERIOR",
+        "ALTO DEL RIB DEL BAJO"
+        "LARGO DEL CUERPO"
+        "LARGO DE LA ESPALDA"
     )
     // Usar mutableStateListOf para que los cambios sean observables por Compose
     private val fields = mutableStateListOf<String>().apply {
