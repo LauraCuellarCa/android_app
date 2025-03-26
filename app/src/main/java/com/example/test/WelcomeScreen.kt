@@ -1,5 +1,6 @@
 package com.example.test
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -7,9 +8,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -19,82 +20,83 @@ import androidx.compose.ui.unit.sp
 fun WelcomeScreen(
     onContinueClick: () -> Unit
 ) {
-    // Create a gradient background
-    val gradientColors = listOf(
-        Color(0xFF6200EE), // Primary color
-        Color(0xFF3700B3)  // Darker variant
-    )
-    
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(colors = gradientColors)
-            )
+            .background(Color.White)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .padding(horizontal = 40.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // App Logo/Icon placeholder
-            Box(
+            Spacer(modifier = Modifier.weight(1f))
+            
+            // Inditex logo
+            Image(
+                painter = painterResource(id = R.drawable.inditex_logo),
+                contentDescription = "Inditex Logo",
                 modifier = Modifier
-                    .size(120.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color.White.copy(alpha = 0.2f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Sizing\nApp",
-                    color = Color.White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(40.dp))
-            
-            // Welcome title
-            Text(
-                text = "Welcome!",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 16.dp)
+                    .width(260.dp)
+                    .height(70.dp),
+                contentScale = ContentScale.Fit
             )
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            // Title
+            Text(
+                text = "Asistente de Voz",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black,
+                textAlign = TextAlign.Center
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
             
             // Description text
             Text(
-                text = "This app helps you measure and record clothing dimensions using voice commands",
-                fontSize = 18.sp,
-                color = Color.White.copy(alpha = 0.8f),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 48.dp)
+                text = "Manos libres, voz activa",
+                fontSize = 16.sp,
+                color = Color.DarkGray,
+                textAlign = TextAlign.Center
             )
             
-            // Continue button with better styling
+            Spacer(modifier = Modifier.weight(1f))
+            
+            // Start button
             Button(
                 onClick = onContinueClick,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White
+                    containerColor = Color.Black
                 ),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(0.dp) // Square corners
             ) {
                 Text(
-                    text = "Get Started",
-                    fontSize = 18.sp,
-                    color = gradientColors[0],
+                    text = "EMPEZAR",
+                    fontSize = 16.sp,
+                    color = Color.White,
                     fontWeight = FontWeight.Bold
                 )
             }
+            
+            Spacer(modifier = Modifier.height(80.dp))
+            
+            // Inditex Tech Logo
+            Image(
+                painter = painterResource(id = R.drawable.inditex_tech_logo),
+                contentDescription = "Inditex Tech Logo",
+                modifier = Modifier
+                    .width(150.dp)
+                    .height(20.dp)
+                    .padding(bottom = 20.dp),
+                contentScale = ContentScale.Fit
+            )
         }
     }
 } 
