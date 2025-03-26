@@ -89,7 +89,11 @@ class MainActivity : ComponentActivity() {
                                 fields[index] = value // Actualizamos el campo dinámicamente
                             },
                             onMicClick = { speechRecognitionHelper.checkPermissionAndStartRecognition() },
-                            onClearClick = { clearAllFields() }
+                            onClearClick = { clearAllFields() },
+                            onBackClick = {
+                                // Return to the welcome screen
+                                showWelcomeScreen.value = true
+                            }
                         )
                     }
                 }
