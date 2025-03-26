@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -13,9 +14,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.draw.alpha
 
 @Composable
 fun MainContent(
@@ -25,14 +29,38 @@ fun MainContent(
     debugText: String = "",  // Texto para debugging
     onFieldChange: (Int, String) -> Unit,  // Función para cambiar el valor de un campo específico
     onMicClick: () -> Unit,
-    onClearClick: () -> Unit
+    onClearClick: () -> Unit,
+    onBackClick: () -> Unit // New callback for back button
 ) {
     Column(
         modifier = modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Title removed to match the screenshot style
+        // Back button at the top left
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                modifier = Modifier
+                    .clickable { onBackClick() }
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Volver",
+                    tint = Color.Black
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "Volver",
+                    color = Color.Black,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
         
         Spacer(modifier = Modifier.height(16.dp))
 
