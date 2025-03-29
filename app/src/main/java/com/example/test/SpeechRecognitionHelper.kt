@@ -2,126 +2,202 @@ package com.example.test
 
 import android.Manifest
 import android.content.Intent
+import android.os.Bundle // Importación añadida
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.widget.Toast
+import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
-import android.os.Bundle
-import androidx.activity.ComponentActivity
 
-class SpeechRecognitionHelper(
+class ContinuousSpeechRecognitionHelper(
     private val activity: ComponentActivity,
-    private val onResult: (String) -> Unit,
+    private val onPartialResult: (String) -> Unit,
+    private val onFinalResult: (String) -> Unit,
     private val onError: (String) -> Unit
 ) {
     private lateinit var speechRecognizer: SpeechRecognizer
+    private var isListening = false
+    private var isProcessingResult = false
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val stopWords = listOf("stop", "alto", "parar", "detener")
 
-    // Permission launcher
     private val requestPermissionLauncher =
         activity.registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            if (isGranted) startRecognition()
-            else onError("Microphone permission required")
+            if (isGranted) startContinuousRecognition()
+            else onError("Se requieren permisos de micrófono")
         }
 
-    // Recognition listener
     private val recognitionListener = object : RecognitionListener {
         override fun onReadyForSpeech(params: Bundle?) {
-            Toast.makeText(activity, "Dime lo que necesitas...", Toast.LENGTH_SHORT).show()
+            activity.runOnUiThread {
+                Toast.makeText(activity, "Puedes hablar ahora...", Toast.LENGTH_SHORT).show()
+            }
         }
 
         override fun onResults(results: Bundle?) {
-            val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-            val spokenText = matches?.get(0) ?: ""
-            onResult(spokenText)
+            isProcessingResult = true
+            try {
+                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                val spokenText = matches?.firstOrNull() ?: ""
+
+                if (containsStopWord(spokenText)) {
+                    stopRecognition()
+                    activity.runOnUiThread {
+                        Toast.makeText(activity, "Micrófono detenido por comando de voz", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    onFinalResult(spokenText)
+                }
+            } finally {
+                isProcessingResult = false
+            }
+
+            if (isListening) {
+                handler.postDelayed({ startListening() }, 200)
+            }
         }
 
         override fun onError(error: Int) {
-            onError(getErrorText(error))
+            val errorMsg = getErrorText(error)
+            activity.runOnUiThread {
+                onError(errorMsg)
+            }
+
+            if (isListening && isRecoverableError(error)) {
+                handler.postDelayed({ startListening() }, 1000)
+            } else {
+                isListening = false
+            }
         }
 
-        override fun onBeginningOfSpeech() {
-            // Retroalimentación cuando se empieza a hablar
-            Toast.makeText(activity, "Escuchando...", Toast.LENGTH_SHORT).show()
+        override fun onPartialResults(partialResults: Bundle?) {
+            if (!isProcessingResult) {
+                val partialMatches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                val partialText = partialMatches?.firstOrNull() ?: ""
+
+                if (partialText.isNotEmpty()) {
+                    if (containsStopWord(partialText)) {
+                        stopRecognition()
+                        activity.runOnUiThread {
+                            Toast.makeText(activity, "Micrófono detenido por comando de voz", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        onPartialResult(partialText)
+                    }
+                }
+            }
         }
 
-        override fun onRmsChanged(rmsdB: Float) {
-            // Podrías usar este valor para medir la calidad del audio, pero no es necesario en este caso
-        }
-
+        override fun onBeginningOfSpeech() {}
+        override fun onRmsChanged(rmsdB: Float) {}
         override fun onBufferReceived(buffer: ByteArray?) {}
-
-        override fun onEndOfSpeech() {
-            // Mensaje de finalización
-            Toast.makeText(activity, "Detenido. Procesando...", Toast.LENGTH_SHORT).show()
-        }
-
-        override fun onPartialResults(partialResults: Bundle?) {}
-
+        override fun onEndOfSpeech() {}
         override fun onEvent(eventType: Int, params: Bundle?) {}
     }
 
-    // Start speech recognition
-    fun startRecognition() {
+    private fun containsStopWord(text: String): Boolean {
+        val cleanText = text.trim().lowercase()
+        return stopWords.any { stopWord ->
+            cleanText.contains(stopWord) ||
+                    cleanText.contains("$stopWord.") ||
+                    cleanText.contains("$stopWord!")
+        }
+    }
+
+    fun startContinuousRecognition() {
         if (SpeechRecognizer.isRecognitionAvailable(activity)) {
-            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(activity).apply {
-                setRecognitionListener(recognitionListener)
+            if (ContextCompat.checkSelfPermission(
+                    activity,
+                    Manifest.permission.RECORD_AUDIO
+                ) != PermissionChecker.PERMISSION_GRANTED
+            ) {
+                requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                return
             }
-            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_WEB_SEARCH) // Más preciso para comandos
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-ES")
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "es-ES")
-                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true) // Para resultados en tiempo real
 
-                // Configuración específica para números:
-                putExtra("android.speech.extra.GET_AUDIO", false) // Reduce sobrecarga
-                putExtra("android.speech.extra.GET_AUDIO_FORMAT", "audio/AMR") // Formato ligero
+            isListening = true
+            initializeRecognizer()
+            startListening()
+        } else {
+            onError("El reconocimiento de voz no está disponible")
+        }
+    }
 
-                // Timeouts ajustados:
-                putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 2000L) // Mínimo 2 segundos
-                putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 2000L)
-                putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1500L)
+    private fun initializeRecognizer() {
+        if (::speechRecognizer.isInitialized) {
+            speechRecognizer.destroy()
+        }
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(activity).apply {
+            setRecognitionListener(recognitionListener)
+        }
+    }
 
-                // Configuración de resultados:
-                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3) // Permite alternativas
-            }
-            // Mostrar mensaje visual de que está escuchando
-            Toast.makeText(activity, "Escuchando...", Toast.LENGTH_SHORT).show()
+    private fun startListening() {
+        if (!isListening || !::speechRecognizer.isInitialized) return
+
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-ES")
+            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            putExtra(
+                RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS,
+                3000L
+            )
+            putExtra(
+                RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS,
+                2500L
+            )
+        }
+
+        try {
             speechRecognizer.startListening(intent)
-        } else {
-            onError("Reconocimiento de voz no disponible")
+            activity.runOnUiThread {
+                Toast.makeText(activity, "Escuchando...", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            onError("Error al iniciar: ${e.message}")
+            if (isListening) {
+                handler.postDelayed({ startListening() }, 1000)
+            }
         }
     }
 
-    // Check permissions and start recognition
-    fun checkPermissionAndStartRecognition() {
-        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO) == PermissionChecker.PERMISSION_GRANTED) {
-            startRecognition()
-        } else {
-            requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+    fun stopRecognition() {
+        isListening = false
+        handler.removeCallbacksAndMessages(null)
+        if (::speechRecognizer.isInitialized) {
+            try {
+                speechRecognizer.stopListening()
+            } catch (e: Exception) {
+                onError("Error al detener: ${e.message}")
+            }
         }
     }
 
-    // Destroy speech recognizer
     fun destroy() {
-        if (::speechRecognizer.isInitialized) speechRecognizer.destroy()
+        stopRecognition()
+        if (::speechRecognizer.isInitialized) {
+            try {
+                speechRecognizer.destroy()
+            } catch (e: Exception) {
+                onError("Error al destruir: ${e.message}")
+            }
+        }
     }
 
-    // Helper function to get error text
+    private fun isRecoverableError(errorCode: Int): Boolean {
+        return errorCode == SpeechRecognizer.ERROR_NO_MATCH ||
+                errorCode == SpeechRecognizer.ERROR_SPEECH_TIMEOUT
+    }
+
     private fun getErrorText(errorCode: Int): String {
         return when (errorCode) {
-            SpeechRecognizer.ERROR_AUDIO -> "Error en la grabación de audio. Intenta más tarde."
-            SpeechRecognizer.ERROR_CLIENT -> "Error en el cliente. Verifica tu configuración."
-            SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Permisos insuficientes para usar el micrófono."
-            SpeechRecognizer.ERROR_NETWORK -> "Problema de conexión. Asegúrate de tener una buena red."
-            SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "La conexión de red se agotó. Intenta de nuevo."
-            SpeechRecognizer.ERROR_NO_MATCH -> "No se pudo reconocer lo que dijiste. Intenta de nuevo."
-            SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "El servicio de reconocimiento está ocupado. Intenta más tarde."
-            SpeechRecognizer.ERROR_SERVER -> "Error del servidor. Intenta más tarde."
-            SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No detectamos audio, por favor habla más claro."
-            else -> "No te entendimos. Intenta de nuevo."
+            SpeechRecognizer.ERROR_NO_MATCH -> "No se reconoció voz. Sigue hablando..."
+            SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No se detectó voz. Sigue hablando..."
+            else -> "Error de reconocimiento (Código: $errorCode)"
         }
     }
 }
