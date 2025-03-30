@@ -20,24 +20,14 @@ import java.text.Normalizer
 import java.util.Locale
 import com.example.tuapp.util.SpanishNumberNormalizer
 
-class MainActivity : ComponentActivity() {
-    private val keyValues = listOf(
-        "ANCHO DE PECHO",
-        "ANCHO DELANTERO (A 1/2 SISA)",
-        "ANCHO DE CINTURA",
-        "ANCHO DEL BAJO",
-        "ANCHO INFERIOR",
-        "ALTO DEL RIB DEL BAJO",
-        "LARGO DEL CUERPO",
-        "LARGO DE LA ESPALDA",
-        "LARGO DE HOMBRO"
-    )
 
+class MainActivity : ComponentActivity() {
+    // Variables de estado
+    private var currentKeyValues = Constants.VALIDACION_MUESTRA_KEYS
     private val fields = mutableStateListOf<String>().apply {
-        addAll(List(keyValues.size) { "" })
+        addAll(List(currentKeyValues.size) { "" })
     }
 
-    // Estados para el reconocimiento de voz
     private val recognizedText = mutableStateOf("")
     private val partialRecognizedText = mutableStateOf("")
     private val isListening = mutableStateOf(false)
@@ -45,8 +35,7 @@ class MainActivity : ComponentActivity() {
 
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
 
-
-    // Screen state
+    // Estados de pantalla
     private enum class Screen {
         WELCOME, SELECTION, MAIN
     }
@@ -66,7 +55,6 @@ class MainActivity : ComponentActivity() {
                     partialRecognizedText.value = partialText
                     processPartialText(partialText)
 
-                    // Verificar si el texto parcial contiene "stop"
                     if (containsStopWord(partialText)) {
                         showStopMessage.value = true
                         handler.postDelayed({ showStopMessage.value = false }, 2000)
@@ -78,7 +66,6 @@ class MainActivity : ComponentActivity() {
                     recognizedText.value = finalText
                     processSpokenText(finalText)
 
-                    // Verificar si el texto final contiene "stop"
                     if (containsStopWord(finalText)) {
                         showStopMessage.value = true
                         handler.postDelayed({ showStopMessage.value = false }, 2000)
@@ -96,10 +83,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             TestTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    // Track current screen
                     val currentScreen = remember { mutableStateOf(Screen.WELCOME) }
+                    val currentFields = remember { mutableStateListOf<String>().apply {
+                        addAll(List(currentKeyValues.size) { "" })
+                    }}
 
-                    // Welcome screen with animation
+                    // Welcome screen
                     AnimatedVisibility(
                         visible = currentScreen.value == Screen.WELCOME,
                         enter = fadeIn(),
@@ -112,7 +101,6 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    // Selection screen with animation
                     AnimatedVisibility(
                         visible = currentScreen.value == Screen.SELECTION,
                         enter = fadeIn(),
@@ -123,12 +111,33 @@ class MainActivity : ComponentActivity() {
                                 currentScreen.value = Screen.WELCOME
                             },
                             onValidacionMuestraClick = {
+                                loadForm(Constants.VALIDACION_MUESTRA_KEYS)
+                                currentScreen.value = Screen.MAIN
+                            },
+                            onDisenoPatronesClick = {
+                                loadForm(Constants.DISENO_PATRONES_KEYS)
+                                currentScreen.value = Screen.MAIN
+                            },
+                            onDatosProveedoresClick = {
+                                loadForm(Constants.DATOS_PROVEEDORES_KEYS)
+                                currentScreen.value = Screen.MAIN
+                            },
+                            onInventarioAlmacenClick = {
+                                loadForm(Constants.INVENTARIO_ALMACEN_KEYS)
+                                currentScreen.value = Screen.MAIN
+                            },
+                            onAsistenteTiendaClick = {
+                                loadForm(Constants.ASISTENTE_TIENDA_KEYS)
+                                currentScreen.value = Screen.MAIN
+                            },
+                            onAltaClienteClick = {
+                                loadForm(Constants.ALTA_CLIENTE_KEYS)
                                 currentScreen.value = Screen.MAIN
                             }
                         )
                     }
 
-                    // Main content with animation
+                    // Main content
                     AnimatedVisibility(
                         visible = currentScreen.value == Screen.MAIN,
                         enter = fadeIn(),
@@ -136,19 +145,21 @@ class MainActivity : ComponentActivity() {
                     ) {
                         MainContent(
                             modifier = Modifier.padding(innerPadding),
-                            keyValues = keyValues,
-                            fields = fields,
+                            keyValues = currentKeyValues,
+                            fields = currentFields,
                             debugText = recognizedText.value,
                             partialDebugText = partialRecognizedText.value,
                             onFieldChange = { index, value ->
-                                fields[index] = value
+                                currentFields[index] = value
                             },
                             onMicClick = {
                                 toggleSpeechRecognition()
                             },
                             isListening = isListening.value,
                             showStopMessage = showStopMessage.value,
-                            onClearClick = { clearAllFields() },
+                            onClearClick = {
+                                clearAllFields(currentFields)
+                            },
                             onBackClick = {
                                 currentScreen.value = Screen.SELECTION
                             }
@@ -157,6 +168,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun loadForm(newKeyValues: List<String>) {
+        currentKeyValues = newKeyValues
+        clearAllFields(fields)
+        fields.addAll(List(currentKeyValues.size) { "" })
     }
 
     private fun toggleSpeechRecognition() {
@@ -217,25 +234,25 @@ class MainActivity : ComponentActivity() {
 
         recognizedText.value = filteredText
 
-        val normalizedKeyMap = keyValues
+        val normalizedKeyMap = currentKeyValues
             .withIndex()
             .associate { (index, key) ->
                 normalizarKeyValue(key) to index
             }
 
         MeasurementProcessor.process(filteredText, normalizedKeyMap) { index, measurement ->
-            updateField(index, measurement)
+            updateField(index, measurement, fields)
         }
     }
 
-    private fun updateField(fieldIndex: Int, measurement: String) {
-        fields[fieldIndex] = measurement
+    private fun updateField(fieldIndex: Int, measurement: String, fieldList: MutableList<String>) {
+        if (fieldIndex in fieldList.indices) {
+            fieldList[fieldIndex] = measurement
+        }
     }
 
-    private fun clearAllFields() {
-        for (i in fields.indices) {
-            fields[i] = ""
-        }
+    private fun clearAllFields(fieldList: MutableList<String>) {
+        fieldList.clear()
         recognizedText.value = ""
         partialRecognizedText.value = ""
         isListening.value = false
