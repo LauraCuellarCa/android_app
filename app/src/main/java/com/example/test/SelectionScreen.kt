@@ -1,6 +1,5 @@
 package com.example.test
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,20 +13,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
 fun SelectionScreen(
     onBackClick: () -> Unit,
-    onValidacionMuestraClick: () -> Unit
+    onValidacionMuestraClick: () -> Unit,
+    onDisenoPatronesClick: () -> Unit,
+    onDatosProveedoresClick: () -> Unit,
+    onInventarioAlmacenClick: () -> Unit,
+    onAsistenteTiendaClick: () -> Unit,
+    onAltaClienteClick: () -> Unit
 ) {
     val showNotAvailableMessage = remember { mutableStateOf(false) }
-    
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -67,7 +68,7 @@ fun SelectionScreen(
                     )
                 }
             }
-            
+
             // Title with letter spacing
             Text(
                 text = "Escoge tu Formulario",
@@ -77,7 +78,7 @@ fun SelectionScreen(
                 color = Color.Black,
                 modifier = Modifier.padding(bottom = 32.dp)
             )
-            
+
             // Form options list
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -87,35 +88,35 @@ fun SelectionScreen(
                     title = "Validacion de Muestra",
                     onClick = onValidacionMuestraClick
                 )
-                
+
                 FormOptionItem(
                     title = "Diseño de Patrones",
-                    onClick = { showNotAvailableMessage.value = true }
+                    onClick = onDisenoPatronesClick
                 )
-                
+
                 FormOptionItem(
                     title = "Datos Proveedores",
-                    onClick = { showNotAvailableMessage.value = true }
+                    onClick = onDatosProveedoresClick
                 )
-                
+
                 FormOptionItem(
                     title = "Inventario de Almacen",
-                    onClick = { showNotAvailableMessage.value = true }
+                    onClick = onInventarioAlmacenClick
                 )
-                
+
                 FormOptionItem(
                     title = "Asistente de Tienda",
-                    onClick = { showNotAvailableMessage.value = true }
+                    onClick = onAsistenteTiendaClick
                 )
-                
+
                 FormOptionItem(
                     title = "Alta de Cliente",
-                    onClick = { showNotAvailableMessage.value = true }
+                    onClick = onAltaClienteClick
                 )
             }
-            
+
             Spacer(modifier = Modifier.weight(1f))
-            
+
             // INDITEX TECH logo at the bottom
             Box(
                 modifier = Modifier
@@ -123,7 +124,6 @@ fun SelectionScreen(
                     .padding(bottom = 20.dp),
                 contentAlignment = Alignment.Center
             ) {
-                // Replace with Image when available
                 Text(
                     text = "INDITEX TECH",
                     color = Color.Black,
@@ -132,8 +132,8 @@ fun SelectionScreen(
                 )
             }
         }
-        
-        // Not available message
+
+        // Not available message (se mantiene por si acaso)
         if (showNotAvailableMessage.value) {
             AlertDialog(
                 onDismissRequest = { showNotAvailableMessage.value = false },
@@ -178,7 +178,7 @@ fun FormOptionItem(
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium
             )
-            
+
             Icon(
                 imageVector = Icons.Default.ArrowForward,
                 contentDescription = "Seleccionar",
@@ -186,4 +186,4 @@ fun FormOptionItem(
             )
         }
     }
-} 
+}
