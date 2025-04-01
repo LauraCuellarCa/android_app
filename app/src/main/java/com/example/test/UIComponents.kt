@@ -239,6 +239,14 @@ fun CustomUnderlinedTextField(
                         .weight(1f)
                         .padding(bottom = 8.dp)
                 )
+
+                Text(
+                    text = "cm",
+                    color = Color.Black,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier
+                        .padding(start = 4.dp, bottom = 8.dp)
+                )
             }
 
             // Línea inferior

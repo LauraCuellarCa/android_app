@@ -1,6 +1,7 @@
 package com.example.test
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -24,9 +25,10 @@ import com.example.tuapp.util.SpanishNumberNormalizer
 class MainActivity : ComponentActivity() {
     // Variables de estado
     private var currentKeyValues = Constants.VALIDACION_MUESTRA_KEYS
-    private val fields = mutableStateListOf<String>().apply {
+    private val _fields = mutableStateListOf<String>().apply {
         addAll(List(currentKeyValues.size) { "" })
     }
+    val fields: List<String> = _fields // Exposición inmutable
 
     private val recognizedText = mutableStateOf("")
     private val partialRecognizedText = mutableStateOf("")
@@ -84,9 +86,6 @@ class MainActivity : ComponentActivity() {
             TestTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     val currentScreen = remember { mutableStateOf(Screen.WELCOME) }
-                    val currentFields = remember { mutableStateListOf<String>().apply {
-                        addAll(List(currentKeyValues.size) { "" })
-                    }}
 
                     // Welcome screen
                     AnimatedVisibility(
@@ -146,11 +145,13 @@ class MainActivity : ComponentActivity() {
                         MainContent(
                             modifier = Modifier.padding(innerPadding),
                             keyValues = currentKeyValues,
-                            fields = currentFields,
+                            fields = fields,
                             debugText = recognizedText.value,
                             partialDebugText = partialRecognizedText.value,
                             onFieldChange = { index, value ->
-                                currentFields[index] = value
+                                if (index in _fields.indices) {
+                                    _fields[index] = value
+                                }
                             },
                             onMicClick = {
                                 toggleSpeechRecognition()
@@ -158,7 +159,7 @@ class MainActivity : ComponentActivity() {
                             isListening = isListening.value,
                             showStopMessage = showStopMessage.value,
                             onClearClick = {
-                                clearAllFields(currentFields)
+                                clearAllFields()
                             },
                             onBackClick = {
                                 currentScreen.value = Screen.SELECTION
@@ -172,8 +173,8 @@ class MainActivity : ComponentActivity() {
 
     private fun loadForm(newKeyValues: List<String>) {
         currentKeyValues = newKeyValues
-        clearAllFields(fields)
-        fields.addAll(List(currentKeyValues.size) { "" })
+        clearAllFields()
+        _fields.addAll(List(currentKeyValues.size) { "" })
     }
 
     private fun toggleSpeechRecognition() {
@@ -240,19 +241,22 @@ class MainActivity : ComponentActivity() {
                 normalizarKeyValue(key) to index
             }
 
+        Log.d("VOICE_INPUT", "Texto procesado: $filteredText")
+        Log.d("VOICE_INPUT", "Mapa de claves: $normalizedKeyMap")
+
         MeasurementProcessor.process(filteredText, normalizedKeyMap) { index, measurement ->
-            updateField(index, measurement, fields)
+            Log.d("VOICE_INPUT", "Intentando actualizar campo $index con '$measurement'")
+            if (index in _fields.indices) {
+                _fields[index] = measurement
+                Log.d("VOICE_INPUT", "Campo actualizado: ${currentKeyValues[index]} = $measurement")
+            } else {
+                Log.e("VOICE_INPUT", "Índice $index fuera de rango (0..${_fields.size-1})")
+            }
         }
     }
 
-    private fun updateField(fieldIndex: Int, measurement: String, fieldList: MutableList<String>) {
-        if (fieldIndex in fieldList.indices) {
-            fieldList[fieldIndex] = measurement
-        }
-    }
-
-    private fun clearAllFields(fieldList: MutableList<String>) {
-        fieldList.clear()
+    private fun clearAllFields() {
+        _fields.clear()
         recognizedText.value = ""
         partialRecognizedText.value = ""
         isListening.value = false
