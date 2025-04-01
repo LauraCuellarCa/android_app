@@ -1,7 +1,7 @@
 package com.example.test
 
 object Constants {
-    val VALIDACION_MUESTRA_KEYS  = listOf(
+    val VALIDACION_MUESTRA_KEYS = listOf(
         "ANCHO DE PECHO",
         "ANCHO DELANTERO (A 1/2 SISA)",
         "ANCHO DE CINTURA",
@@ -13,7 +13,7 @@ object Constants {
         "LARGO DE HOMBRO"
     )
 
-    val DISENO_PATRONES_KEYS   = listOf(
+    val DISENO_PATRONES_KEYS = listOf(
         "LARGO TOTAL",
         "ANCHO SUPERIOR",
         "ANCHO INFERIOR",
@@ -21,7 +21,7 @@ object Constants {
         "CONTORNO DE CUELLO"
     )
 
-    val DATOS_PROVEEDORES_KEYS  = listOf(
+    val DATOS_PROVEEDORES_KEYS = listOf(
         "NOMBRE DEL PROVEEDOR",
         "DIRECCIÓN",
         "TELÉFONO",
@@ -29,7 +29,7 @@ object Constants {
         "NIF"
     )
 
-    val INVENTARIO_ALMACEN_KEYS  = listOf(
+    val INVENTARIO_ALMACEN_KEYS = listOf(
         "CÓDIGO",
         "DESCRIPCIÓN",
         "CANTIDAD",
@@ -37,7 +37,7 @@ object Constants {
         "FECHA ENTRADA"
     )
 
-    val ASISTENTE_TIENDA_KEYS   = listOf(
+    val ASISTENTE_TIENDA_KEYS = listOf(
         "NOMBRE CLIENTE",
         "TALLA SOLICITADA",
         "ARTÍCULO",
