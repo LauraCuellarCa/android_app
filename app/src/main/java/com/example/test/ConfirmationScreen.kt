@@ -1,25 +1,26 @@
 package com.example.test
 
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.rememberLottieComposition
+import androidx.compose.ui.viewinterop.AndroidView
+import com.airbnb.lottie.LottieAnimationView
+import com.airbnb.lottie.LottieDrawable
 
 @Composable
 fun ConfirmationScreen(
@@ -38,18 +39,23 @@ fun ConfirmationScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Lottie success animation
-            // Note: You need to add your animation file in app/src/main/res/raw/success_animation.json
-            val composition by rememberLottieComposition(
-                LottieCompositionSpec.RawRes(R.raw.success_animation)
+            // Lottie success animation using AndroidView
+            AndroidView(
+                factory = { context ->
+                    LottieAnimationView(context).apply {
+                        layoutParams = FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            400 // Height in pixels
+                        )
+                        setAnimation(R.raw.success_animation) // Updated to match your file name
+                        repeatCount = LottieDrawable.INFINITE
+                        playAnimation()
+                    }
+                },
+                modifier = Modifier
+                    .size(200.dp)
+                    .padding(bottom = 16.dp)
             )
-            LottieAnimation(
-                composition = composition,
-                iterations = LottieConstants.IterateForever,
-                modifier = Modifier.size(200.dp)
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
             
             // Success title
             Text(
