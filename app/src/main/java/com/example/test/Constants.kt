@@ -14,26 +14,37 @@ object Constants {
     )
 
     val DISENO_PATRONES_KEYS = listOf(
-        "LARGO TOTAL",
-        "ANCHO SUPERIOR",
-        "ANCHO INFERIOR",
-        "PROFUNDIDAD DE SISA",
-        "CONTORNO DE CUELLO"
+        "CÓDIGO DE DISEÑO",
+        "NOMBRE DEL PATRÓN",
+        "TIPO DE TELA",
+        "TAMAÑO",
+        "COLOR BASE",
+        "VARIACIONES",
+        "DISEÑADOR RESPONSABLE",
+        "FECHA DE CREACIÓN",
+        "ESTADO DEL DISEÑO"
     )
 
     val DATOS_PROVEEDORES_KEYS = listOf(
         "NOMBRE DEL PROVEEDOR",
+        "CONTACTO PRINCIPAL",
         "DIRECCIÓN",
         "TELÉFONO",
         "EMAIL",
+        "TIPOS DE PRODUCTOS",
+        "CONDICIONES DE PAGO",
+        "FECHA DE ALTA",
         "NIF"
     )
 
     val INVENTARIO_ALMACEN_KEYS = listOf(
-        "CÓDIGO",
-        "DESCRIPCIÓN",
-        "CANTIDAD",
-        "UBICACIÓN",
+        "CÓDIGO DE PRODUCTO",
+        "DESCRIPCIÓN DEL PRODUCTO",
+        "CATEGORÍA",
+        "CANTIDAD DISPONIBLE",
+        "UBICACIÓN DEL ALMACÉN",
+        "STOCK MÍNIMO",
+        "RESPONSABLE",
         "FECHA ENTRADA"
     )
 
@@ -47,9 +58,13 @@ object Constants {
 
     val ALTA_CLIENTE_KEYS  = listOf(
         "NOMBRE COMPLETO",
+        "TIPO DE IDENTIFICACIÓN",
+        "NÚMERO DE IDENTIFICACIÓN",
         "DIRECCIÓN",
         "TELÉFONO",
         "EMAIL",
-        "FECHA NACIMIENTO"
+        "MÉTODO DE PAGO",
+        "FECHA DE ALTA",
+        "FECHA DE NACIMIENTO"
     )
 }
