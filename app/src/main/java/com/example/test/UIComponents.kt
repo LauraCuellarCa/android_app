@@ -148,7 +148,8 @@ fun MainContent(
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Black
-            )
+            ),
+            shape = RoundedCornerShape(0.dp)
         ) {
             Text(
                 text = "CONFIRMAR",
