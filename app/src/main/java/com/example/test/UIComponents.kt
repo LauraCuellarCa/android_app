@@ -263,33 +263,19 @@ fun CustomUnderlinedTextField(
             modifier = Modifier
                 .weight(0.4f)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                BasicTextField(
-                    value = value,
-                    onValueChange = onValueChange,
-                    textStyle = TextStyle(
-                        color = Color.Black,
-                        fontSize = 18.sp,
-                        textAlign = TextAlign.End
-                    ),
-                    singleLine = true,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(bottom = 8.dp)
-                )
-
-                Text(
-                    text = "cm",
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                textStyle = TextStyle(
                     color = Color.Black,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier
-                        .padding(start = 4.dp, bottom = 8.dp)
-                )
-            }
+                    fontSize = 18.sp,
+                    textAlign = TextAlign.End
+                ),
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
+            )
 
             // Línea inferior
             Box(
