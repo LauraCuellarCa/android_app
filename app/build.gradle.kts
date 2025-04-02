@@ -55,6 +55,11 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation(libs.androidx.storage)
 
+    //Add Lottie Dependency for animations
+    def lottieVersion = "6.6.4" 
+    implementation ("com.airbnb.android:lottie:$lottieVersion")
+
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
