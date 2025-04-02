@@ -25,6 +25,7 @@ import com.example.tuapp.util.SpanishNumberNormalizer
 class MainActivity : ComponentActivity() {
     // Variables de estado
     private var currentKeyValues = Constants.VALIDACION_MUESTRA_KEYS
+    private var currentFormTitle = "Validacion de Muestra"
     private val _fields = mutableStateListOf<String>().apply {
         addAll(List(currentKeyValues.size) { "" })
     }
@@ -39,7 +40,7 @@ class MainActivity : ComponentActivity() {
 
     // Estados de pantalla
     private enum class Screen {
-        WELCOME, SELECTION, MAIN
+        WELCOME, SELECTION, MAIN, CONFIRMATION
     }
 
     // Speech recognition helper
@@ -110,27 +111,27 @@ class MainActivity : ComponentActivity() {
                                 currentScreen.value = Screen.WELCOME
                             },
                             onValidacionMuestraClick = {
-                                loadForm(Constants.VALIDACION_MUESTRA_KEYS)
+                                loadForm(Constants.VALIDACION_MUESTRA_KEYS, "Validacion de Muestra")
                                 currentScreen.value = Screen.MAIN
                             },
                             onDisenoPatronesClick = {
-                                loadForm(Constants.DISENO_PATRONES_KEYS)
+                                loadForm(Constants.DISENO_PATRONES_KEYS, "Diseño de Patrones")
                                 currentScreen.value = Screen.MAIN
                             },
                             onDatosProveedoresClick = {
-                                loadForm(Constants.DATOS_PROVEEDORES_KEYS)
+                                loadForm(Constants.DATOS_PROVEEDORES_KEYS, "Datos Proveedores")
                                 currentScreen.value = Screen.MAIN
                             },
                             onInventarioAlmacenClick = {
-                                loadForm(Constants.INVENTARIO_ALMACEN_KEYS)
+                                loadForm(Constants.INVENTARIO_ALMACEN_KEYS, "Inventario de Almacen")
                                 currentScreen.value = Screen.MAIN
                             },
                             onAsistenteTiendaClick = {
-                                loadForm(Constants.ASISTENTE_TIENDA_KEYS)
+                                loadForm(Constants.ASISTENTE_TIENDA_KEYS, "Asistente de Tienda")
                                 currentScreen.value = Screen.MAIN
                             },
                             onAltaClienteClick = {
-                                loadForm(Constants.ALTA_CLIENTE_KEYS)
+                                loadForm(Constants.ALTA_CLIENTE_KEYS, "Alta de Cliente")
                                 currentScreen.value = Screen.MAIN
                             }
                         )
@@ -144,6 +145,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         MainContent(
                             modifier = Modifier.padding(innerPadding),
+                            formTitle = currentFormTitle,
                             keyValues = currentKeyValues,
                             fields = fields,
                             debugText = recognizedText.value,
@@ -163,6 +165,24 @@ class MainActivity : ComponentActivity() {
                             },
                             onBackClick = {
                                 currentScreen.value = Screen.SELECTION
+                            },
+                            onConfirmClick = {
+                                // Navigate to confirmation screen
+                                currentScreen.value = Screen.CONFIRMATION
+                            }
+                        )
+                    }
+
+                    // Confirmation screen
+                    AnimatedVisibility(
+                        visible = currentScreen.value == Screen.CONFIRMATION,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        ConfirmationScreen(
+                            formTitle = currentFormTitle,
+                            onBackToSelectionClick = {
+                                currentScreen.value = Screen.SELECTION
                             }
                         )
                     }
@@ -171,8 +191,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun loadForm(newKeyValues: List<String>) {
+    private fun loadForm(newKeyValues: List<String>, title: String) {
         currentKeyValues = newKeyValues
+        currentFormTitle = title
         clearAllFields()
         _fields.addAll(List(currentKeyValues.size) { "" })
     }

@@ -3,13 +3,13 @@ package com.example.test
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,8 +27,6 @@ fun SelectionScreen(
     onAsistenteTiendaClick: () -> Unit,
     onAltaClienteClick: () -> Unit
 ) {
-    val showNotAvailableMessage = remember { mutableStateOf(false) }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -69,53 +67,38 @@ fun SelectionScreen(
                 }
             }
 
-            // Title with letter spacing
+            // Title with letter spacing - updated to all caps and bold
             Text(
-                text = "Escoge tu Formulario",
+                text = "ESCOGE TU FORMULARIO",
                 fontSize = 32.sp,
-                fontWeight = FontWeight.Light,
+                fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
                 color = Color.Black,
-                modifier = Modifier.padding(bottom = 32.dp)
+                modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            // Form options list
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(1.dp)
+            // Form options list as a scrollable LazyColumn
+            val formOptions = listOf(
+                Pair("Validacion de Muestra", onValidacionMuestraClick),
+                Pair("Diseño de Patrones", onDisenoPatronesClick),
+                Pair("Datos Proveedores", onDatosProveedoresClick),
+                Pair("Inventario de Almacen", onInventarioAlmacenClick),
+                Pair("Asistente de Tienda", onAsistenteTiendaClick),
+                Pair("Alta de Cliente", onAltaClienteClick)
+            )
+            
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
             ) {
-                FormOptionItem(
-                    title = "Validacion de Muestra",
-                    onClick = onValidacionMuestraClick
-                )
-
-                FormOptionItem(
-                    title = "Diseño de Patrones",
-                    onClick = onDisenoPatronesClick
-                )
-
-                FormOptionItem(
-                    title = "Datos Proveedores",
-                    onClick = onDatosProveedoresClick
-                )
-
-                FormOptionItem(
-                    title = "Inventario de Almacen",
-                    onClick = onInventarioAlmacenClick
-                )
-
-                FormOptionItem(
-                    title = "Asistente de Tienda",
-                    onClick = onAsistenteTiendaClick
-                )
-
-                FormOptionItem(
-                    title = "Alta de Cliente",
-                    onClick = onAltaClienteClick
-                )
+                items(formOptions) { (title, onClick) ->
+                    FormListItem(
+                        title = title,
+                        onClick = onClick
+                    )
+                }
             }
-
-            Spacer(modifier = Modifier.weight(1f))
 
             // INDITEX TECH logo at the bottom
             Box(
@@ -132,58 +115,38 @@ fun SelectionScreen(
                 )
             }
         }
-
-        // Not available message (se mantiene por si acaso)
-        if (showNotAvailableMessage.value) {
-            AlertDialog(
-                onDismissRequest = { showNotAvailableMessage.value = false },
-                title = { Text("Aviso") },
-                text = { Text("Formulario no disponible") },
-                confirmButton = {
-                    Button(
-                        onClick = { showNotAvailableMessage.value = false },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Black
-                        )
-                    ) {
-                        Text("Aceptar")
-                    }
-                }
-            )
-        }
     }
 }
 
 @Composable
-fun FormOptionItem(
+fun FormListItem(
     title: String,
     onClick: () -> Unit
 ) {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.Black)
             .clickable(onClick = onClick)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp, horizontal = 24.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+                .padding(vertical = 16.dp),
+            horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = title,
-                color = Color.White,
+                text = title.uppercase(),
+                color = Color.Black,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium
             )
-
-            Icon(
-                imageVector = Icons.Default.ArrowForward,
-                contentDescription = "Seleccionar",
-                tint = Color.White
-            )
         }
+        
+        // Divider line between items
+        Divider(
+            color = Color.LightGray,
+            thickness = 1.dp
+        )
     }
 }

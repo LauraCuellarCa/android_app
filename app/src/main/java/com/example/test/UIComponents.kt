@@ -1,5 +1,6 @@
 package com.example.test
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -14,15 +15,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.sp
 
 @Composable
 fun MainContent(
     modifier: Modifier = Modifier,
+    formTitle: String,
     keyValues: List<String>,
     fields: List<String>,
     debugText: String = "",
@@ -30,9 +35,10 @@ fun MainContent(
     onFieldChange: (Int, String) -> Unit,
     onMicClick: () -> Unit,
     isListening: Boolean,
-    showStopMessage: Boolean, // Nuevo parámetro
+    showStopMessage: Boolean,
     onClearClick: () -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onConfirmClick: () -> Unit
 ) {
     Column(
         modifier = modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 16.dp),
@@ -65,18 +71,63 @@ fun MainContent(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-
-        // Campos de entrada
-        keyValues.forEachIndexed { index, keyValue ->
-            CustomUnderlinedTextField(
-                label = keyValue,
-                value = fields.getOrElse(index) { "" },
-                onValueChange = { newValue -> onFieldChange(index, newValue) },
-                modifier = Modifier.fillMaxWidth()
+        
+        // Title bar with logo, divider, and form title
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Inditex logo (small)
+            Image(
+                painter = painterResource(id = R.drawable.inditex_logo),
+                contentDescription = "Inditex Logo",
+                modifier = Modifier
+                    .width(80.dp)
+                    .height(24.dp),
+                contentScale = ContentScale.Fit
+            )
+            
+            // Vertical divider
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 12.dp)
+                    .height(24.dp)
+                    .width(1.dp)
+                    .background(Color.LightGray)
+            )
+            
+            // Form title
+            Text(
+                text = formTitle.uppercase(),
+                fontWeight = FontWeight.Medium,
+                fontSize = 16.sp,
+                color = Color.Black
             )
         }
+        
+        Divider(color = Color.LightGray, thickness = 1.dp)
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Spacer(modifier = Modifier.height(24.dp))
+        // Scrollable container for form fields
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
+            // Campos de entrada
+            keyValues.forEachIndexed { index, keyValue ->
+                CustomUnderlinedTextField(
+                    label = keyValue,
+                    value = fields.getOrElse(index) { "" },
+                    onValueChange = { newValue -> onFieldChange(index, newValue) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Sección de reconocimiento de voz
         VoiceRecognitionSection(
@@ -84,9 +135,30 @@ fun MainContent(
             partialDebugText = partialDebugText,
             onMicClick = onMicClick,
             isListening = isListening,
-            showStopMessage = showStopMessage, // Pasar el nuevo parámetro
+            showStopMessage = showStopMessage,
             onClearClick = onClearClick
         )
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Confirm button
+        Button(
+            onClick = onConfirmClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Black
+            ),
+            shape = RoundedCornerShape(0.dp)
+        ) {
+            Text(
+                text = "CONFIRMAR",
+                fontSize = 16.sp,
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
 
@@ -96,7 +168,7 @@ fun VoiceRecognitionSection(
     partialDebugText: String,
     onMicClick: () -> Unit,
     isListening: Boolean,
-    showStopMessage: Boolean, // Nuevo parámetro
+    showStopMessage: Boolean,
     onClearClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -200,63 +272,45 @@ fun CustomUnderlinedTextField(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
     ) {
-        // Etiqueta
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.Black,
+        // Row with label and input field
+        Row(
             modifier = Modifier
-                .weight(0.6f)
-                .padding(end = 8.dp)
-        )
-
-        // Campo de texto con subrayado
-        Box(
-            modifier = Modifier
-                .weight(0.4f)
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                BasicTextField(
-                    value = value,
-                    onValueChange = onValueChange,
-                    textStyle = TextStyle(
-                        color = Color.Black,
-                        fontSize = 18.sp,
-                        textAlign = TextAlign.End
-                    ),
-                    singleLine = true,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(bottom = 8.dp)
-                )
-
-                Text(
-                    text = "cm",
+            // Label on the left
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Black,
+                modifier = Modifier.weight(0.6f)
+            )
+            
+            // Input field on the right
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                textStyle = TextStyle(
                     color = Color.Black,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier
-                        .padding(start = 4.dp, bottom = 8.dp)
-                )
-            }
-
-            // Línea inferior
-            Box(
+                    fontSize = 18.sp,
+                    textAlign = TextAlign.End
+                ),
+                singleLine = true,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(Color.LightGray)
-                    .align(Alignment.BottomCenter)
+                    .weight(0.4f)
             )
         }
+        
+        // Full-width divider line between rows
+        Divider(
+            color = Color.LightGray,
+            thickness = 1.dp
+        )
     }
 }
