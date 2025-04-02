@@ -1,32 +1,44 @@
 package com.example.test
 
-import android.view.ViewGroup
-import android.widget.FrameLayout
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import com.airbnb.lottie.LottieAnimationView
-import com.airbnb.lottie.LottieDrawable
 
 @Composable
 fun ConfirmationScreen(
     formTitle: String,
     onBackToSelectionClick: () -> Unit
 ) {
+    // Create pulsating animation
+    val infiniteTransition = rememberInfiniteTransition(label = "check_animation")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 0.8f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scale_animation"
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -39,30 +51,21 @@ fun ConfirmationScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Lottie success animation using AndroidView
-            AndroidView(
-                factory = { context ->
-                    // Create the LottieAnimationView programmatically
-                    val animationView = LottieAnimationView(context)
-                    
-                    // Set layout parameters
-                    animationView.layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    )
-                    
-                    // Configure animation
-                    animationView.setAnimation(R.raw.success_animation)
-                    animationView.repeatCount = LottieDrawable.INFINITE
-                    animationView.playAnimation()
-                    
-                    // Return the view
-                    animationView
-                },
+            // Animated success icon with pulsating effect
+            Box(
                 modifier = Modifier
-                    .height(200.dp)
-                    .fillMaxWidth()
-            )
+                    .size(150.dp)
+                    .scale(scale)
+                    .background(Color.Black, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = "Éxito",
+                    tint = Color.White,
+                    modifier = Modifier.size(80.dp)
+                )
+            }
             
             Spacer(modifier = Modifier.height(24.dp))
             
