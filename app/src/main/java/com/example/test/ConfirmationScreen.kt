@@ -42,20 +42,29 @@ fun ConfirmationScreen(
             // Lottie success animation using AndroidView
             AndroidView(
                 factory = { context ->
-                    LottieAnimationView(context).apply {
-                        layoutParams = FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            400 // Height in pixels
-                        )
-                        setAnimation(R.raw.success_animation) // Updated to match your file name
-                        repeatCount = LottieDrawable.INFINITE
-                        playAnimation()
-                    }
+                    // Create the LottieAnimationView programmatically
+                    val animationView = LottieAnimationView(context)
+                    
+                    // Set layout parameters
+                    animationView.layoutParams = ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                    )
+                    
+                    // Configure animation
+                    animationView.setAnimation(R.raw.success_animation)
+                    animationView.repeatCount = LottieDrawable.INFINITE
+                    animationView.playAnimation()
+                    
+                    // Return the view
+                    animationView
                 },
                 modifier = Modifier
-                    .size(200.dp)
-                    .padding(bottom = 16.dp)
+                    .height(200.dp)
+                    .fillMaxWidth()
             )
+            
+            Spacer(modifier = Modifier.height(24.dp))
             
             // Success title
             Text(
