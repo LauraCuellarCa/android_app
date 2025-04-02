@@ -85,8 +85,7 @@ fun ConfirmationScreen(
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Black
-                ),
-                shape = RoundedCornerShape(0.dp) // Square corners
+                )
             ) {
                 Text(
                     text = "VOLVER A FORMULARIOS",
