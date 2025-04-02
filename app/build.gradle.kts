@@ -56,8 +56,7 @@ dependencies {
     implementation(libs.androidx.storage)
 
     //Add Lottie Dependency for animations
-    def lottieVersion = "6.6.4" 
-    implementation ("com.airbnb.android:lottie:$lottieVersion")
+    implementation("com.airbnb.android:lottie:6.1.0")
 
 
     testImplementation(libs.junit)
