@@ -36,7 +36,8 @@ fun MainContent(
     isListening: Boolean,
     showStopMessage: Boolean,
     onClearClick: () -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onConfirmClick: () -> Unit
 ) {
     Column(
         modifier = modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 16.dp),
@@ -108,17 +109,24 @@ fun MainContent(
         Divider(color = Color.LightGray, thickness = 1.dp)
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Campos de entrada
-        keyValues.forEachIndexed { index, keyValue ->
-            CustomUnderlinedTextField(
-                label = keyValue,
-                value = fields.getOrElse(index) { "" },
-                onValueChange = { newValue -> onFieldChange(index, newValue) },
-                modifier = Modifier.fillMaxWidth()
-            )
+        // Scrollable container for form fields
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
+            // Campos de entrada
+            keyValues.forEachIndexed { index, keyValue ->
+                CustomUnderlinedTextField(
+                    label = keyValue,
+                    value = fields.getOrElse(index) { "" },
+                    onValueChange = { newValue -> onFieldChange(index, newValue) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Sección de reconocimiento de voz
         VoiceRecognitionSection(
@@ -129,6 +137,27 @@ fun MainContent(
             showStopMessage = showStopMessage,
             onClearClick = onClearClick
         )
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Confirm button
+        Button(
+            onClick = onConfirmClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Black
+            ),
+            shape = RoundedCornerShape(0.dp) // Square corners
+        ) {
+            Text(
+                text = "CONFIRMAR",
+                fontSize = 16.sp,
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }
 

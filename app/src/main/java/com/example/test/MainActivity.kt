@@ -40,7 +40,7 @@ class MainActivity : ComponentActivity() {
 
     // Estados de pantalla
     private enum class Screen {
-        WELCOME, SELECTION, MAIN
+        WELCOME, SELECTION, MAIN, CONFIRMATION
     }
 
     // Speech recognition helper
@@ -164,6 +164,24 @@ class MainActivity : ComponentActivity() {
                                 clearAllFields()
                             },
                             onBackClick = {
+                                currentScreen.value = Screen.SELECTION
+                            },
+                            onConfirmClick = {
+                                // Navigate to confirmation screen
+                                currentScreen.value = Screen.CONFIRMATION
+                            }
+                        )
+                    }
+
+                    // Confirmation screen
+                    AnimatedVisibility(
+                        visible = currentScreen.value == Screen.CONFIRMATION,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        ConfirmationScreen(
+                            formTitle = currentFormTitle,
+                            onBackToSelectionClick = {
                                 currentScreen.value = Screen.SELECTION
                             }
                         )
