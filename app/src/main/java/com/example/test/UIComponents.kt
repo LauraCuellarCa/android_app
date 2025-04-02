@@ -242,27 +242,27 @@ fun CustomUnderlinedTextField(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
     ) {
-        // Etiqueta
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.Black,
+        // Row with label and input field
+        Row(
             modifier = Modifier
-                .weight(0.6f)
-                .padding(end = 8.dp)
-        )
-
-        // Campo de texto con subrayado
-        Box(
-            modifier = Modifier
-                .weight(0.4f)
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            // Label on the left
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Black,
+                modifier = Modifier.weight(0.6f)
+            )
+            
+            // Input field on the right
             BasicTextField(
                 value = value,
                 onValueChange = onValueChange,
@@ -273,18 +273,14 @@ fun CustomUnderlinedTextField(
                 ),
                 singleLine = true,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp)
-            )
-
-            // Línea inferior
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(Color.LightGray)
-                    .align(Alignment.BottomCenter)
+                    .weight(0.4f)
             )
         }
+        
+        // Full-width divider line between rows
+        Divider(
+            color = Color.LightGray,
+            thickness = 1.dp
+        )
     }
 }

@@ -67,11 +67,11 @@ fun SelectionScreen(
                 }
             }
 
-            // Title with letter spacing
+            // Title with letter spacing - updated to all caps and bold
             Text(
-                text = "Escoge tu Formulario",
+                text = "ESCOGE TU FORMULARIO",
                 fontSize = 32.sp,
-                fontWeight = FontWeight.Light,
+                fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
                 color = Color.Black,
                 modifier = Modifier.padding(bottom = 16.dp)
