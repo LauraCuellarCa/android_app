@@ -132,20 +132,14 @@ fun FormListItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = title,
+                text = title.uppercase(),
                 color = Color.Black,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium
-            )
-            
-            Icon(
-                imageVector = Icons.Default.ArrowForward,
-                contentDescription = "Seleccionar",
-                tint = Color.Black
             )
         }
         

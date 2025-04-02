@@ -1,5 +1,6 @@
 package com.example.test
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -17,12 +18,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.sp
 
 @Composable
 fun MainContent(
     modifier: Modifier = Modifier,
+    formTitle: String,
     keyValues: List<String>,
     fields: List<String>,
     debugText: String = "",
@@ -30,7 +34,7 @@ fun MainContent(
     onFieldChange: (Int, String) -> Unit,
     onMicClick: () -> Unit,
     isListening: Boolean,
-    showStopMessage: Boolean, // Nuevo parámetro
+    showStopMessage: Boolean,
     onClearClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -65,6 +69,44 @@ fun MainContent(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+        
+        // Title bar with logo, divider, and form title
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Inditex logo (small)
+            Image(
+                painter = painterResource(id = R.drawable.inditex_logo),
+                contentDescription = "Inditex Logo",
+                modifier = Modifier
+                    .width(80.dp)
+                    .height(24.dp),
+                contentScale = ContentScale.Fit
+            )
+            
+            // Vertical divider
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 12.dp)
+                    .height(24.dp)
+                    .width(1.dp)
+                    .background(Color.LightGray)
+            )
+            
+            // Form title
+            Text(
+                text = formTitle.uppercase(),
+                fontWeight = FontWeight.Medium,
+                fontSize = 16.sp,
+                color = Color.Black
+            )
+        }
+        
+        Divider(color = Color.LightGray, thickness = 1.dp)
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Campos de entrada
         keyValues.forEachIndexed { index, keyValue ->
@@ -84,7 +126,7 @@ fun MainContent(
             partialDebugText = partialDebugText,
             onMicClick = onMicClick,
             isListening = isListening,
-            showStopMessage = showStopMessage, // Pasar el nuevo parámetro
+            showStopMessage = showStopMessage,
             onClearClick = onClearClick
         )
     }
@@ -96,7 +138,7 @@ fun VoiceRecognitionSection(
     partialDebugText: String,
     onMicClick: () -> Unit,
     isListening: Boolean,
-    showStopMessage: Boolean, // Nuevo parámetro
+    showStopMessage: Boolean,
     onClearClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
