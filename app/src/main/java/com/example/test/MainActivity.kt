@@ -210,7 +210,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun containsStopWord(text: String): Boolean {
-        val stopWords = listOf("stop", "alto", "parar", "detener")
+        val stopWords = listOf("stop", "parar", "detener")
         val cleanText = text.trim().lowercase(Locale.getDefault())
         return stopWords.any { cleanText.contains(it) }
     }
@@ -218,7 +218,16 @@ class MainActivity : ComponentActivity() {
     private fun normalizarKeyValue(key: String): String {
         return key
             .lowercase(Locale.getDefault())
-            .replace(Regex("[^a-z0-9áéíóúüñ\\s]"), "")
+            // Primero reemplazar vocales acentuadas
+            .replace("á", "a")
+            .replace("é", "e")
+            .replace("í", "i")
+            .replace("ó", "o")
+            .replace("ú", "u")
+            .replace("ü", "u")
+            .replace("ñ", "n")  // Opcional: puedes mantener la ñ si lo prefieres
+            // Luego eliminar otros caracteres especiales
+            .replace(Regex("[^a-z0-9\\s]"), "")
             .split(" ")
             .filter { it.length >= 4 }
             .joinToString(" ")

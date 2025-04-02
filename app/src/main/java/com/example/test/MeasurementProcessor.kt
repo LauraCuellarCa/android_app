@@ -4,40 +4,54 @@ import android.util.Log
 
 class MeasurementProcessor {
     companion object {
-        // Expresión regex modificada para separar correctamente número y unidades
-        private val measurementPattern =
-            """(?<keyValue>.+?)\s*(?<numberValue>\d+(?:\.\d+)?).*"""
-
+        // Patrón para capturar key y value (sin procesar)
+// Patrón CORRECTO:
+        private val measurementPattern = """(?<keyValue>[a-z]+(?:\s+[a-z]+)?)\s+(?<numberValue>.+)""".toRegex()        // Palabras clave que identifican campos de teléfono
+        private val phoneKeywords = listOf("telefono", "movil", "codigo", "cantidad", "nif", "numero identificacion", "stock minimo", "cantidad disponible", "codigo diseno")
+        private val fechaKeywords = listOf("fecha nacimiento", "fecha", "fecha entrada", "fecha alta", "fecha creacion")
 
         fun process(spokenText: String, keyMap: Map<String, Int>, updateField: (Int, String) -> Unit) {
+            Log.d("MeasurementProcessor", "Procesando: '$spokenText'")
 
-            val matches = Regex(measurementPattern).findAll(spokenText)
-
-            if (matches.none()) {
-                trySimpleMatching(spokenText, keyMap, updateField)
+            // Buscamos coincidencia con el patrón
+            val match = measurementPattern.find(spokenText.trim()) ?: run {
+                Log.d("MeasurementProcessor", "No se encontró patrón")
                 return
             }
 
-            matches.forEach { match ->
-                val key = match.groups["keyValue"]?.value?.trim() ?: return@forEach
-                val number = match.groups["numberValue"]?.value?.trim() ?: return@forEach
+            val key = match.groups["keyValue"]?.value?.trim() ?: return
+            val rawValue = match.groups["numberValue"]?.value?.trim() ?: return
 
-                keyMap[key]?.let { index ->
-                    updateField(index, "$number cm")
-                    Log.d("MeasurementProcessor", "Asignado: $key = $number cm")
-                }
+            // Verificamos si es un campo de teléfono
+            val isPhoneField = phoneKeywords.any { keyword ->
+                key.contains(keyword, ignoreCase = true)
             }
-        }
+            val isFechaField = fechaKeywords.any { keyword ->
+                key.contains(keyword, ignoreCase = true)
+            }
+            val isNumeric = rawValue.matches("-?\\d+(\\.\\d+)?".toRegex())
 
-        private fun trySimpleMatching(text: String, keyMap: Map<String, Int>, updateField: (Int, String) -> Unit) {
-            keyMap.forEach { (key, index) ->
-                if (text.contains(key)) {
-                    val remainingText = text.substringAfter(key)
-                    Regex("\\d+").find(remainingText)?.let {
-                        updateField(index, "${it.value} cm")
-                    }
-                }
+            // Procesamos el valor según el tipo de campo
+            val finalValue = if (isPhoneField) {
+                // Para teléfono: quitamos TODOS los espacios y caracteres no numéricos
+                rawValue.replace("[^0-9]".toRegex(), "")
             }
+            else if (isFechaField) {
+                // Para fechas: quitamos TODOS los espacios y caracteres no numéricos
+                rawValue.replace("[^0-9]".toRegex(), "/")
+            }
+            else if (isNumeric){
+                "$rawValue cm"
+            }
+            else {
+                // Para otros campos: dejamos el valor tal cual
+                rawValue
+            }
+
+            keyMap[key]?.let { index ->
+                Log.d("MeasurementProcessor", "Asignando: $key = $finalValue")
+                updateField(index, finalValue)
+            } ?: Log.d("MeasurementProcessor", "Key '$key' no encontrada en el mapa")
         }
     }
 }
