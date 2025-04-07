@@ -30,7 +30,6 @@ fun MainContent(
     formTitle: String,
     keyValues: List<String>,
     fields: List<String>,
-    debugText: String = "",
     partialDebugText: String = "",
     onFieldChange: (Int, String) -> Unit,
     onMicClick: () -> Unit,
