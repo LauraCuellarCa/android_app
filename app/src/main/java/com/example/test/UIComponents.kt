@@ -44,12 +44,13 @@ fun MainContent(
         modifier = modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        // Botón de retroceso
+        // Top bar with back button and trash button
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start,
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Back button
             Row(
                 modifier = Modifier
                     .clickable { onBackClick() }
@@ -68,10 +69,23 @@ fun MainContent(
                     fontWeight = FontWeight.Medium
                 )
             }
+
+            // Trash button (moved to top right)
+            IconButton(
+                onClick = onClearClick,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = "Limpiar campos",
+                    tint = Color.Black,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         // Title bar with logo, divider, and form title
         Row(
             modifier = Modifier
@@ -88,7 +102,7 @@ fun MainContent(
                     .height(24.dp),
                 contentScale = ContentScale.Fit
             )
-            
+
             // Vertical divider
             Box(
                 modifier = Modifier
@@ -97,7 +111,7 @@ fun MainContent(
                     .width(1.dp)
                     .background(Color.LightGray)
             )
-            
+
             // Form title
             Text(
                 text = formTitle.uppercase(),
@@ -106,7 +120,7 @@ fun MainContent(
                 color = Color.Black
             )
         }
-        
+
         Divider(color = Color.LightGray, thickness = 1.dp)
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -131,16 +145,15 @@ fun MainContent(
 
         // Sección de reconocimiento de voz
         VoiceRecognitionSection(
-            debugText = debugText,
             partialDebugText = partialDebugText,
             onMicClick = onMicClick,
             isListening = isListening,
             showStopMessage = showStopMessage,
             onClearClick = onClearClick
         )
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         // Confirm button
         Button(
             onClick = onConfirmClick,
@@ -164,7 +177,6 @@ fun MainContent(
 
 @Composable
 fun VoiceRecognitionSection(
-    debugText: String,
     partialDebugText: String,
     onMicClick: () -> Unit,
     isListening: Boolean,
@@ -192,7 +204,7 @@ fun VoiceRecognitionSection(
         // Mostrar texto parcial (en tiempo real)
         if (partialDebugText.isNotEmpty()) {
             Text(
-                text = "Escuchando: $partialDebugText",
+                text = partialDebugText,
                 color = Color(0xFF4CAF50), // Verde
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontStyle = FontStyle.Italic
@@ -204,25 +216,11 @@ fun VoiceRecognitionSection(
             )
         }
 
-        // Mostrar texto final reconocido
-        if (debugText.isNotEmpty()) {
-            Text(
-                text = "Reconocido: $debugText",
-                color = Color.Blue,
-                style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            )
-        }
-
-        // Controles de voz
-        Row(
+        // Centered microphone button
+        Box(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            contentAlignment = Alignment.Center
         ) {
-            // Botón de micrófono con estado
             IconButton(
                 onClick = onMicClick,
                 modifier = Modifier.size(56.dp)
@@ -238,26 +236,6 @@ fun VoiceRecognitionSection(
                         text = if (isListening) "Detener" else "Grabar",
                         fontSize = 12.sp,
                         color = if (isListening) Color.Red else Color(0xFF6200EE)
-                    )
-                }
-            }
-
-            // Botón de limpiar
-            IconButton(
-                onClick = onClearClick,
-                modifier = Modifier.size(56.dp)
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Limpiar campos",
-                        tint = Color.Gray,
-                        modifier = Modifier.size(32.dp)
-                    )
-                    Text(
-                        text = "Limpiar",
-                        fontSize = 12.sp,
-                        color = Color.Gray
                     )
                 }
             }
@@ -291,7 +269,7 @@ fun CustomUnderlinedTextField(
                 color = Color.Black,
                 modifier = Modifier.weight(0.6f)
             )
-            
+
             // Input field on the right
             BasicTextField(
                 value = value,
@@ -306,7 +284,7 @@ fun CustomUnderlinedTextField(
                     .weight(0.4f)
             )
         }
-        
+
         // Full-width divider line between rows
         Divider(
             color = Color.LightGray,

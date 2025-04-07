@@ -69,13 +69,15 @@ fun SelectionScreen(
 
             // Title with letter spacing - updated to all caps and bold
             Text(
-                text = "ESCOGE TU FORMULARIO",
+                text = "ESCOGE TU\nFORMULARIO",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
+                lineHeight = 30.sp, // Aumenta el espacio entre líneas
                 color = Color.Black,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
+
 
             // Form options list as a scrollable LazyColumn
             val formOptions = listOf(
