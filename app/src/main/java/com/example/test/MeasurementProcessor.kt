@@ -20,7 +20,23 @@ class MeasurementProcessor {
             }
 
             val key = match.groups["keyValue"]?.value?.trim() ?: return
-            val rawValue = match.groups["numberValue"]?.value?.trim() ?: return
+            var rawValue = match.groups["numberValue"]?.value?.trim() ?: return
+
+            rawValue = rawValue
+                .replace(" con ", ".", ignoreCase = true)
+                .replace(" coma ", ".", ignoreCase = true)
+
+            val parts = rawValue.split(" ")
+
+            if (parts.size == 2) {
+                val first = parts[0].toIntOrNull()
+                val second = parts[1].toIntOrNull()
+
+                if (first != null && second == 1 && first % 10 == 0) {
+                    rawValue = (first + 1).toString()
+                }
+            }
+
 
             // Verificamos si es un campo de teléfono
             val isPhoneField = phoneKeywords.any { keyword ->
@@ -44,7 +60,6 @@ class MeasurementProcessor {
                 "$rawValue cm"
             }
             else {
-                // Para otros campos: dejamos el valor tal cual
                 rawValue
             }
 

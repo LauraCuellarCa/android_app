@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
     private val _fields = mutableStateListOf<String>().apply {
         addAll(List(currentKeyValues.size) { "" })
     }
-    val fields: List<String> = _fields // Exposición inmutable
+    private val fields: List<String> = _fields // Exposición inmutable
 
     private val recognizedText = mutableStateOf("")
     private val partialRecognizedText = mutableStateOf("")
@@ -148,7 +148,6 @@ class MainActivity : ComponentActivity() {
                             formTitle = currentFormTitle,
                             keyValues = currentKeyValues,
                             fields = fields,
-                            debugText = recognizedText.value,
                             partialDebugText = partialRecognizedText.value,
                             onFieldChange = { index, value ->
                                 if (index in _fields.indices) {
@@ -271,16 +270,10 @@ class MainActivity : ComponentActivity() {
                 normalizarKeyValue(key) to index
             }
 
-        Log.d("VOICE_INPUT", "Texto procesado: $filteredText")
-        Log.d("VOICE_INPUT", "Mapa de claves: $normalizedKeyMap")
 
         MeasurementProcessor.process(filteredText, normalizedKeyMap) { index, measurement ->
-            Log.d("VOICE_INPUT", "Intentando actualizar campo $index con '$measurement'")
             if (index in _fields.indices) {
                 _fields[index] = measurement
-                Log.d("VOICE_INPUT", "Campo actualizado: ${currentKeyValues[index]} = $measurement")
-            } else {
-                Log.e("VOICE_INPUT", "Índice $index fuera de rango (0..${_fields.size-1})")
             }
         }
     }
