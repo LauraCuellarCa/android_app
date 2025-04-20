@@ -31,21 +31,60 @@ fun WelcomeScreen(
                 .padding(horizontal = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(40.dp))
             
-            // Inditex logo
+            // Inditex logo (smaller)
             Image(
                 painter = painterResource(id = R.drawable.inditex_logo),
                 contentDescription = "Inditex Logo",
                 modifier = Modifier
-                    .width(260.dp)
-                    .height(70.dp),
+                    .width(180.dp)
+                    .height(50.dp),
                 contentScale = ContentScale.Fit
             )
             
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(40.dp))
             
-            // Title
+            // ZIA Logo - Replace R.drawable.zia_logo with your actual logo resource
+            // Uncomment when you add the logo to drawable resources
+            Image(
+                 painter = painterResource(id = R.drawable.zia_logo),
+                 contentDescription = "ZIA Logo",
+                 modifier = Modifier
+                     .width(120.dp)
+                     .height(120.dp),
+                 contentScale = ContentScale.Fit
+            )
+            
+            // Temporary text in place of logo - Replace this with the Image above when ready
+            Box(
+                modifier = Modifier
+                    .size(120.dp)
+                    .background(Color.LightGray, shape = RoundedCornerShape(60.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "LOGO",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // ZIA Title
+            Text(
+                text = "ZIA",
+                fontSize = 36.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black,
+                textAlign = TextAlign.Center
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Original app title
             Text(
                 text = "Asistente de Voz",
                 fontSize = 24.sp,
@@ -85,7 +124,7 @@ fun WelcomeScreen(
                 )
             }
             
-            Spacer(modifier = Modifier.height(80.dp))
+            Spacer(modifier = Modifier.height(40.dp))
             
             // Inditex Tech Logo
             Image(
