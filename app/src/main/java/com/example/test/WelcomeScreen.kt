@@ -31,8 +31,8 @@ fun WelcomeScreen(
                 .padding(horizontal = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Add more space at the top for better centering
-            Spacer(modifier = Modifier.weight(0.15f))
+            // Increase top space to push content lower
+            Spacer(modifier = Modifier.weight(0.25f))
             
             // ZIA Logo (made bigger)
             Image(
@@ -77,8 +77,8 @@ fun WelcomeScreen(
                 contentScale = ContentScale.Fit
             )
             
-            // Flexible space between content and bottom elements
-            Spacer(modifier = Modifier.weight(0.6f))
+            // Reduced weight here to balance with increased weight at top
+            Spacer(modifier = Modifier.weight(0.45f))
             
             // Start button
             Button(
