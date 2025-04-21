@@ -44,8 +44,8 @@ fun WelcomeScreen(
                 contentScale = ContentScale.Fit
             )
             
-            // Reduced spacer between logo and text
-            Spacer(modifier = Modifier.height(0.35.dp))
+            // Minimal spacer between logo and text
+            Spacer(modifier = Modifier.height(4.dp))
             
             // Description text
             Text(
