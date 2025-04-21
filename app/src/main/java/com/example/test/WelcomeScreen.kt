@@ -65,6 +65,18 @@ fun WelcomeScreen(
                 textAlign = TextAlign.Center
             )
             
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            // Inditex logo (moved directly under the description)
+            Image(
+                painter = painterResource(id = R.drawable.inditex_logo),
+                contentDescription = "Inditex Logo",
+                modifier = Modifier
+                    .width(120.dp)
+                    .height(30.dp),
+                contentScale = ContentScale.Fit
+            )
+            
             // Flexible space between content and bottom elements
             Spacer(modifier = Modifier.weight(0.6f))
             
@@ -88,18 +100,6 @@ fun WelcomeScreen(
             }
             
             Spacer(modifier = Modifier.height(40.dp))
-            
-            // Inditex logo (smaller and moved to bottom)
-            Image(
-                painter = painterResource(id = R.drawable.inditex_logo),
-                contentDescription = "Inditex Logo",
-                modifier = Modifier
-                    .width(120.dp)
-                    .height(30.dp),
-                contentScale = ContentScale.Fit
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
             
             // Inditex Tech Logo
             Image(
