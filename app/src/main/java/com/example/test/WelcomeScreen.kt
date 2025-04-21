@@ -32,7 +32,7 @@ fun WelcomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Increase top space to push content lower
-            Spacer(modifier = Modifier.weight(0.25f))
+            Spacer(modifier = Modifier.weight(0.35f))
             
             // ZIA Logo (made much bigger)
             Image(
@@ -44,7 +44,8 @@ fun WelcomeScreen(
                 contentScale = ContentScale.Fit
             )
             
-            Spacer(modifier = Modifier.height(32.dp))
+            // Reduced spacer between logo and text
+            Spacer(modifier = Modifier.height(16.dp))
             
             // Description text
             Text(
@@ -67,7 +68,7 @@ fun WelcomeScreen(
             )
             
             // Reduced weight here to balance with increased weight at top
-            Spacer(modifier = Modifier.weight(0.45f))
+            Spacer(modifier = Modifier.weight(0.35f))
             
             // Start button
             Button(
