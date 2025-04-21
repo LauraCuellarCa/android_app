@@ -31,27 +31,16 @@ fun WelcomeScreen(
                 .padding(horizontal = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(40.dp))
+            // Add more space at the top for better centering
+            Spacer(modifier = Modifier.weight(0.15f))
             
-            // Inditex logo (smaller)
-            Image(
-                painter = painterResource(id = R.drawable.inditex_logo),
-                contentDescription = "Inditex Logo",
-                modifier = Modifier
-                    .width(180.dp)
-                    .height(50.dp),
-                contentScale = ContentScale.Fit
-            )
-            
-            Spacer(modifier = Modifier.height(60.dp))
-            
-            // ZIA Logo
+            // ZIA Logo (made bigger)
             Image(
                 painter = painterResource(id = R.drawable.zia_logo),
                 contentDescription = "ZIA Logo",
                 modifier = Modifier
-                    .width(120.dp)
-                    .height(120.dp),
+                    .width(150.dp)
+                    .height(150.dp),
                 contentScale = ContentScale.Fit
             )
             
@@ -60,7 +49,7 @@ fun WelcomeScreen(
             // Original app title
             Text(
                 text = "Asistente de Voz",
-                fontSize = 24.sp,
+                fontSize = 28.sp,  // Slightly larger
                 fontWeight = FontWeight.Bold,
                 color = Color.Black,
                 textAlign = TextAlign.Center
@@ -71,12 +60,13 @@ fun WelcomeScreen(
             // Description text
             Text(
                 text = "Manos libres, voz activa",
-                fontSize = 16.sp,
+                fontSize = 18.sp,  // Slightly larger
                 color = Color.DarkGray,
                 textAlign = TextAlign.Center
             )
             
-            Spacer(modifier = Modifier.weight(1f))
+            // Flexible space between content and bottom elements
+            Spacer(modifier = Modifier.weight(0.6f))
             
             // Start button
             Button(
@@ -98,6 +88,18 @@ fun WelcomeScreen(
             }
             
             Spacer(modifier = Modifier.height(40.dp))
+            
+            // Inditex logo (smaller and moved to bottom)
+            Image(
+                painter = painterResource(id = R.drawable.inditex_logo),
+                contentDescription = "Inditex Logo",
+                modifier = Modifier
+                    .width(120.dp)
+                    .height(30.dp),
+                contentScale = ContentScale.Fit
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
             
             // Inditex Tech Logo
             Image(
