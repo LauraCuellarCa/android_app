@@ -45,7 +45,7 @@ fun WelcomeScreen(
             )
             
             // Reduced spacer between logo and text
-            Spacer(modifier = Modifier.height(5.dp))
+            Spacer(modifier = Modifier.height(1.dp))
             
             // Description text
             Text(
