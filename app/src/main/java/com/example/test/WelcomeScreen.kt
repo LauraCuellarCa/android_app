@@ -34,33 +34,22 @@ fun WelcomeScreen(
             // Increase top space to push content lower
             Spacer(modifier = Modifier.weight(0.25f))
             
-            // ZIA Logo (made bigger)
+            // ZIA Logo (made much bigger)
             Image(
                 painter = painterResource(id = R.drawable.zia_logo),
                 contentDescription = "ZIA Logo",
                 modifier = Modifier
-                    .width(150.dp)
-                    .height(150.dp),
+                    .width(240.dp)
+                    .height(240.dp),
                 contentScale = ContentScale.Fit
             )
             
             Spacer(modifier = Modifier.height(32.dp))
             
-            // Original app title
-            Text(
-                text = "Asistente de Voz",
-                fontSize = 28.sp,  // Slightly larger
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                textAlign = TextAlign.Center
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
             // Description text
             Text(
                 text = "Manos libres, voz activa",
-                fontSize = 18.sp,  // Slightly larger
+                fontSize = 18.sp,
                 color = Color.DarkGray,
                 textAlign = TextAlign.Center
             )
